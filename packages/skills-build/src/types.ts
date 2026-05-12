@@ -14,7 +14,7 @@ export interface CodeExample {
   additionalText?: string
 }
 
-export interface Rule {
+export interface Reference {
   id: string
   title: string
   section: number
@@ -33,12 +33,12 @@ export interface Section {
   impact: ImpactLevel
   impactDescription?: string
   introduction?: string
-  rules: Rule[]
+  references: Reference[]
 }
 
 export interface TestCase {
-  ruleId: string
-  ruleTitle: string
+  referenceId: string
+  referenceTitle: string
   type: 'bad' | 'good'
   code: string
   language: string
@@ -50,8 +50,16 @@ export interface SkillConfig {
   title: string
   description: string
   skillDir: string
-  rulesDir: string
+  /** Directory containing per-reference source files (spec-canonical name).
+   *  Conventionally `references/` under the skill root. */
+  referencesDir: string
   metadataFile: string
+  /** Path to the compiled long-form AGENTS.md output. */
   outputFile: string
+  /** Path to the compiled SKILL.md output. Defaults to `<skillDir>/SKILL.md`. */
+  skillMdFile?: string
+  /** Folder name (relative to skillDir) that the generated SKILL.md's TOC links
+   *  into. Should be the basename of `referencesDir`. */
+  referencesFolder: string
   sectionMap: Record<string, number>
 }

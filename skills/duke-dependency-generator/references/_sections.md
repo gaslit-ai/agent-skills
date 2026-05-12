@@ -1,6 +1,6 @@
 # Sections
 
-This file defines section ordering, impact, and rule prefixes.
+This file defines section ordering, impact, and reference filename prefixes.
 
 ---
 

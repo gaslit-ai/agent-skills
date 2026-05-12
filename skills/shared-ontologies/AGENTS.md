@@ -12,25 +12,25 @@ May 2026
 
 ## Abstract
 
-Evidence-based playbook for shared ontologies in software systems — semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts. Each rule separates source-backed evidence (synthesized from cited literature) from derived engineering guidance. Per-rule frontmatter records evidenceStrength and corroborationCount in place of subjective confidence levels. Code examples are synthetic implementation sketches, not examples observed in the cited papers. Synthesizes 50+ peer-reviewed or canonical sources spanning ontology engineering (Gruber, Grüninger & Fox, METHONTOLOGY, NeOn, Ontology Requirements Specification), semantic web standards (OWL 2 profiles, OBDA, SHACL/ShEx, R2RML), software-engineering ontology literature, biomedical ontology infrastructure (OBO Foundry, Gene Ontology, MIREOT), upper ontologies (DOLCE, BFO), modularity research, ontology evaluation (OntoClean, OOPS!, RDFUnit), ontology evolution and versioning (PAV, Flouris, Zablith), schema and ontology matching (Rahm & Bernstein; Euzenat & Shvaiko), and collaborative ontology engineering (WebProtégé, NeOn governance) into rules covering requirements, architecture, validation, evolution, and governance.
+Evidence-based playbook for shared ontologies in software systems — semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts. Each reference separates source-backed evidence (synthesized from cited literature) from derived engineering guidance. Per-reference frontmatter records evidenceStrength and corroborationCount in place of subjective confidence levels. Code examples are synthetic implementation sketches, not examples observed in the cited papers. Synthesizes 50+ peer-reviewed or canonical sources spanning ontology engineering (Gruber, Grüninger & Fox, METHONTOLOGY, NeOn, Ontology Requirements Specification), semantic web standards (OWL 2 profiles, OBDA, SHACL/ShEx, R2RML), software-engineering ontology literature, biomedical ontology infrastructure (OBO Foundry, Gene Ontology, MIREOT), upper ontologies (DOLCE, BFO), modularity research, ontology evaluation (OntoClean, OOPS!, RDFUnit), ontology evolution and versioning (PAV, Flouris, Zablith), schema and ontology matching (Rahm & Bernstein; Euzenat & Shvaiko), and collaborative ontology engineering (WebProtégé, NeOn governance) into references covering requirements, architecture, validation, evolution, and governance.
 
 ---
 
 ## Table of Contents
 
-1. [Requirements — Purpose, Scope, and Contract](#1-requirements--purpose-scope-and-contract) — **CRITICAL**
+1. [Requirements — Purpose, Scope, and Contract](#1-requirements-—-purpose,-scope,-and-contract) — **CRITICAL**
    - 1.1 [Define Ontology Scope With Competency Questions Before Adding Shared Terms](#11-define-ontology-scope-with-competency-questions-before-adding-shared-terms)
    - 1.2 [Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions](#12-treat-shared-ontology-terms-as-semantic-contracts-not-naming-conventions)
-2. [Architecture — Reuse, Modularity, and Expressivity](#2-architecture--reuse-modularity-and-expressivity) — **HIGH**
+2. [Architecture — Reuse, Modularity, and Expressivity](#2-architecture-—-reuse,-modularity,-and-expressivity) — **HIGH**
    - 2.1 [Choose Ontology Expressivity From the Required Inference and Validation Workload](#21-choose-ontology-expressivity-from-the-required-inference-and-validation-workload)
    - 2.2 [Modularize Shared Ontologies Around Stable Software and Data Boundaries](#22-modularize-shared-ontologies-around-stable-software-and-data-boundaries)
    - 2.3 [Reuse Reference Ontologies When They Match the Competency Questions](#23-reuse-reference-ontologies-when-they-match-the-competency-questions)
-3. [Validation — Release-Gate Checks](#3-validation--release-gate-checks) — **CRITICAL**
+3. [Validation — Release-Gate Checks](#3-validation-—-release-gate-checks) — **CRITICAL**
    - 3.1 [Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks](#31-validate-ontology-releases-with-competency-tests-reasoners-shapes-and-pitfall-checks)
-4. [Evolution — Versioning and Mappings](#4-evolution--versioning-and-mappings) — **CRITICAL**
+4. [Evolution — Versioning and Mappings](#4-evolution-—-versioning-and-mappings) — **CRITICAL**
    - 4.1 [Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts](#41-make-schema-to-ontology-and-ontology-to-ontology-mappings-first-class-artifacts)
    - 4.2 [Version Ontology Changes as Semantic Migrations](#42-version-ontology-changes-as-semantic-migrations)
-5. [Governance — Editorial Workflow and Measurement](#5-governance--editorial-workflow-and-measurement) — **HIGH**
+5. [Governance — Editorial Workflow and Measurement](#5-governance-—-editorial-workflow-and-measurement) — **HIGH**
    - 5.1 [Govern Shared Ontologies With Collaborative Editorial Workflow](#51-govern-shared-ontologies-with-collaborative-editorial-workflow)
    - 5.2 [Measure Ontology Value by Operational Interoperability, Not Term Count](#52-measure-ontology-value-by-operational-interoperability-not-term-count)
 

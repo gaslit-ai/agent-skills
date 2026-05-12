@@ -1,140 +1,140 @@
 [
   {
-    "ruleId": "architecture-modular-boundaries",
-    "ruleTitle": "Modularize Shared Ontologies Around Stable Software and Data Boundaries",
+    "referenceId": "architecture-modular-boundaries",
+    "referenceTitle": "Modularize Shared Ontologies Around Stable Software and Data Boundaries",
     "type": "bad",
     "code": "// Synthetic anti-pattern: every service imports the entire enterprise ontology.\nimport { EnterpriseOntology } from \"@example/ontology/all\";\n\nexport const ownerClass = EnterpriseOntology.Customer.Account.Owner;",
     "language": "ts"
   },
   {
-    "ruleId": "architecture-modular-boundaries",
-    "ruleTitle": "Modularize Shared Ontologies Around Stable Software and Data Boundaries",
+    "referenceId": "architecture-modular-boundaries",
+    "referenceTitle": "Modularize Shared Ontologies Around Stable Software and Data Boundaries",
     "type": "good",
     "code": "type OntologyModuleDependency = {\n  moduleIri: string;\n  version: string;\n  requiredFor: readonly string[];\n};\n\nexport const billingOntologyDependencies: readonly OntologyModuleDependency[] = [\n  {\n    moduleIri: \"https://ontology.example/customer-core\",\n    version: \"2.1.0\",\n    requiredFor: [\"CQ-001\", \"CQ-004\"]\n  },\n  {\n    moduleIri: \"https://ontology.example/account-relations\",\n    version: \"1.8.0\",\n    requiredFor: [\"CQ-001\"]\n  }\n];",
     "language": "ts"
   },
   {
-    "ruleId": "architecture-reuse-reference",
-    "ruleTitle": "Reuse Reference Ontologies When They Match the Competency Questions",
+    "referenceId": "architecture-reuse-reference",
+    "referenceTitle": "Reuse Reference Ontologies When They Match the Competency Questions",
     "type": "bad",
     "code": "// Synthetic anti-pattern: local synonym created before checking reference terms.\nexport const CellPart = {\n  iri: \"https://ontology.example/lab#CellPart\",\n  definition: \"Something that is part of a biological cell.\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "architecture-reuse-reference",
-    "ruleTitle": "Reuse Reference Ontologies When They Match the Competency Questions",
+    "referenceId": "architecture-reuse-reference",
+    "referenceTitle": "Reuse Reference Ontologies When They Match the Competency Questions",
     "type": "good",
     "code": "type ExternalOntologyReference = {\n  localAlias: string;\n  externalIri: string;\n  sourceOntology: string;\n  reuseReason: string;\n};\n\nexport const CellularComponentRef: ExternalOntologyReference = {\n  localAlias: \"CellularComponent\",\n  externalIri: \"http://purl.obolibrary.org/obo/GO_0005575\",\n  sourceOntology: \"Gene Ontology\",\n  reuseReason:\n    \"Matches the competency question about annotating assay observations by cellular component.\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "architecture-weakest-formalism",
-    "ruleTitle": "Choose Ontology Expressivity From the Required Inference and Validation Workload",
+    "referenceId": "architecture-weakest-formalism",
+    "referenceTitle": "Choose Ontology Expressivity From the Required Inference and Validation Workload",
     "type": "bad",
     "code": "// Synthetic anti-pattern: maximum formalism selected without workload analysis.\nexport const ontologyRuntime = {\n  language: \"OWL-DL\",\n  reasoner: \"global\",\n  reason: \"formal ontologies should always use the strongest logic\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "architecture-weakest-formalism",
-    "ruleTitle": "Choose Ontology Expressivity From the Required Inference and Validation Workload",
+    "referenceId": "architecture-weakest-formalism",
+    "referenceTitle": "Choose Ontology Expressivity From the Required Inference and Validation Workload",
     "type": "good",
     "code": "type OntologyFormalismDecision = {\n  requirement: string;\n  selectedFormalism: \"SKOS\" | \"OWL2-EL\" | \"OWL2-QL\" | \"OWL2-RL\" | \"SHACL\" | \"R2RML\";\n  reason: string;\n};\n\nexport const formalismDecisions: readonly OntologyFormalismDecision[] = [\n  {\n    requirement: \"Validate required fields and cardinalities in incoming RDF data.\",\n    selectedFormalism: \"SHACL\",\n    reason: \"Closed-world constraint validation against data graphs.\"\n  },\n  {\n    requirement: \"Expose relational source tables through ontology-level queries.\",\n    selectedFormalism: \"R2RML\",\n    reason: \"Mapping relational data to RDF terms for ontology-based access.\"\n  },\n  {\n    requirement: \"Classify a large biomedical-style class hierarchy.\",\n    selectedFormalism: \"OWL2-EL\",\n    reason: \"OWL 2 EL is designed for large ontologies with polynomial-time reasoning.\"\n  }\n];",
     "language": "ts"
   },
   {
-    "ruleId": "evolution-mappings-first-class",
-    "ruleTitle": "Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts",
+    "referenceId": "evolution-mappings-first-class",
+    "referenceTitle": "Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts",
     "type": "bad",
     "code": "// Synthetic anti-pattern: semantic mapping hidden in procedural normalization.\nexport function normalizeOwner(row: Record<string, unknown>) {\n  return {\n    ownerId: row.client_id ?? row.party_ref ?? row.account_holder_id\n  };\n}",
     "language": "ts"
   },
   {
-    "ruleId": "evolution-mappings-first-class",
-    "ruleTitle": "Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts",
+    "referenceId": "evolution-mappings-first-class",
+    "referenceTitle": "Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts",
     "type": "good",
     "code": "type SourceToOntologyMapping = {\n  sourceField: string;\n  targetTermIri: string;\n  relation: string;\n  cardinality: \"one-to-one\" | \"many-to-one\" | \"one-to-many\";\n  transformation: string;\n  tests: readonly string[];\n};\n\nexport const billingOwnerMapping: SourceToOntologyMapping = {\n  sourceField: \"billing.client_id\",\n  targetTermIri: \"https://ontology.example/customer/v2#LegalCustomer\",\n  relation: \"identifies\",\n  cardinality: \"many-to-one\",\n  transformation: \"Resolve billing.client_id through billing_party_registry.\",\n  tests: [\"client-id-resolves-to-legal-customer\", \"cq-001-owner-query-uses-mapping\"]\n};",
     "language": "ts"
   },
   {
-    "ruleId": "evolution-versioned-migrations",
-    "ruleTitle": "Version Ontology Changes as Semantic Migrations",
+    "referenceId": "evolution-versioned-migrations",
+    "referenceTitle": "Version Ontology Changes as Semantic Migrations",
     "type": "bad",
     "code": "// Synthetic anti-pattern: same IRI, changed meaning, no migration metadata.\nexport const Customer = {\n  iri: \"https://ontology.example/customer#Customer\",\n  definition: \"A person who can log in to the product.\"\n};\n\n// Later, silently changed:\nexport const CustomerChanged = {\n  iri: \"https://ontology.example/customer#Customer\",\n  definition: \"A legal party with billable account responsibility.\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "evolution-versioned-migrations",
-    "ruleTitle": "Version Ontology Changes as Semantic Migrations",
+    "referenceId": "evolution-versioned-migrations",
+    "referenceTitle": "Version Ontology Changes as Semantic Migrations",
     "type": "good",
     "code": "type OntologyMigration = {\n  fromIri: string;\n  toIri: string;\n  changeType: \"rename\" | \"split\" | \"merge\" | \"semantic-narrowing\" | \"semantic-broadening\";\n  affectedCompetencyQuestions: readonly string[];\n  migrationTests: readonly string[];\n  provenance: string;\n};\n\nexport const CustomerMigrationV1ToV2: OntologyMigration = {\n  fromIri: \"https://ontology.example/customer/v1#Customer\",\n  toIri: \"https://ontology.example/customer/v2#LegalCustomer\",\n  changeType: \"semantic-narrowing\",\n  affectedCompetencyQuestions: [\"CQ-001\", \"CQ-009\"],\n  migrationTests: [\"legacy-customer-to-legal-customer-mapping\", \"cq-001-still-answers\"],\n  provenance: \"PAV-compatible release note; approved in ONT-1042\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "governance-editorial-workflow",
-    "ruleTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
+    "referenceId": "governance-editorial-workflow",
+    "referenceTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
     "type": "bad",
     "code": "// Synthetic anti-pattern: semantic change merged as an ordinary local refactor.\nawait ontologyRepository.merge({\n  change: \"Rename Party to Customer because Customer sounds clearer.\",\n  proposer: \"one-service-owner\",\n  reviewers: [],\n  affectedMappings: [],\n  affectedCompetencyQuestions: []\n});",
     "language": "ts"
   },
   {
-    "ruleId": "governance-editorial-workflow",
-    "ruleTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
+    "referenceId": "governance-editorial-workflow",
+    "referenceTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
     "type": "good",
     "code": "type OntologyChangeProposal = {\n  id: string;\n  affectedTerms: readonly string[];\n  affectedCompetencyQuestions: readonly string[];\n  affectedMappings: readonly string[];\n  requiredReviewers: readonly string[];\n  validationEvidence: readonly string[];\n  decisionRecord: string;\n};\n\nexport const partyCustomerBoundaryProposal: OntologyChangeProposal = {\n  id: \"ONT-742\",\n  affectedTerms: [\"Party\", \"LegalCustomer\", \"NaturalPerson\"],\n  affectedCompetencyQuestions: [\"CQ-001\", \"CQ-017\"],\n  affectedMappings: [\"billing.client_id -> LegalCustomer\"],\n  requiredReviewers: [\"domain-owner\", \"data-architecture\", \"billing-service-owner\"],\n  validationEvidence: [\"cq-tests-pass\", \"mapping-tests-pass\", \"shacl-tests-pass\"],\n  decisionRecord: \"ADR-ONT-742\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "governance-operational-measurement",
-    "ruleTitle": "Measure Ontology Value by Operational Interoperability, Not Term Count",
+    "referenceId": "governance-operational-measurement",
+    "referenceTitle": "Measure Ontology Value by Operational Interoperability, Not Term Count",
     "type": "bad",
     "code": "// Synthetic anti-pattern: ontology success reduced to vocabulary size.\nexport const ontologyHealth = {\n  termCount: 12_000,\n  status: \"healthy\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "governance-operational-measurement",
-    "ruleTitle": "Measure Ontology Value by Operational Interoperability, Not Term Count",
+    "referenceId": "governance-operational-measurement",
+    "referenceTitle": "Measure Ontology Value by Operational Interoperability, Not Term Count",
     "type": "good",
     "code": "type OntologyOperationalMetrics = {\n  competencyQuestionPassRate: number;\n  shaclValidationPassRate: number;\n  mappingTestPassRate: number;\n  downstreamConsumerCount: number;\n  reusedMappingCount: number;\n  adapterBranchesRemoved: number;\n};\n\nexport const ontologyHealth: OntologyOperationalMetrics = {\n  competencyQuestionPassRate: 0.98,\n  shaclValidationPassRate: 0.99,\n  mappingTestPassRate: 0.97,\n  downstreamConsumerCount: 14,\n  reusedMappingCount: 38,\n  adapterBranchesRemoved: 22\n};",
     "language": "ts"
   },
   {
-    "ruleId": "requirements-competency-questions",
-    "ruleTitle": "Define Ontology Scope With Competency Questions Before Adding Shared Terms",
+    "referenceId": "requirements-competency-questions",
+    "referenceTitle": "Define Ontology Scope With Competency Questions Before Adding Shared Terms",
     "type": "bad",
     "code": "// Synthetic anti-pattern: a shared term list with no scope, user, query, or test.\nexport const enterpriseTerms = [\n  \"Customer\",\n  \"Account\",\n  \"Party\",\n  \"Owner\",\n  \"Identity\"\n] as const;",
     "language": "ts"
   },
   {
-    "ruleId": "requirements-competency-questions",
-    "ruleTitle": "Define Ontology Scope With Competency Questions Before Adding Shared Terms",
+    "referenceId": "requirements-competency-questions",
+    "referenceTitle": "Define Ontology Scope With Competency Questions Before Adding Shared Terms",
     "type": "good",
     "code": "type CompetencyQuestion = {\n  id: string;\n  question: string;\n  requiredTerms: readonly string[];\n  acceptanceTest: string;\n};\n\nexport const customerAccountOntologyScope = {\n  intendedUse: \"Resolve account ownership for billing and compliance queries.\",\n  intendedUsers: [\"billing-service\", \"compliance-reporting\", \"identity-service\"],\n  excludedUses: [\"marketing segmentation\", \"credit-risk scoring\"],\n  competencyQuestions: [\n    {\n      id: \"CQ-001\",\n      question: \"Which legal party owned an account at a given effective time?\",\n      requiredTerms: [\"LegalParty\", \"Account\", \"ownsAccount\", \"effectiveTime\"],\n      acceptanceTest: \"query(CQ-001) returns exactly one owner for audited examples\"\n    }\n  ]\n} satisfies {\n  intendedUse: string;\n  intendedUsers: readonly string[];\n  excludedUses: readonly string[];\n  competencyQuestions: readonly CompetencyQuestion[];\n};",
     "language": "ts"
   },
   {
-    "ruleId": "requirements-semantic-contract",
-    "ruleTitle": "Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions",
+    "referenceId": "requirements-semantic-contract",
+    "referenceTitle": "Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions",
     "type": "bad",
     "code": "// Synthetic anti-pattern: identical label, unresolved semantics.\ntype CustomerId = string;\n\n// In one service: payer.\n// In another service: login subject.\n// In another service: legal account owner.\nexport function loadCustomer(id: CustomerId) {\n  return fetch(`/customers/${id}`);\n}",
     "language": "ts"
   },
   {
-    "ruleId": "requirements-semantic-contract",
-    "ruleTitle": "Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions",
+    "referenceId": "requirements-semantic-contract",
+    "referenceTitle": "Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions",
     "type": "good",
     "code": "type OntologyTerm = {\n  iri: string;\n  preferredLabel: string;\n  definition: string;\n  broader?: string;\n  relations: readonly string[];\n  provenance: string;\n};\n\nexport const LegalCustomer: OntologyTerm = {\n  iri: \"https://ontology.example/customer/v2#LegalCustomer\",\n  preferredLabel: \"Legal customer\",\n  definition:\n    \"A legal party that has an accountable commercial relationship with the organization.\",\n  broader: \"https://ontology.example/party/v1#LegalParty\",\n  relations: [\"ownsAccount\", \"hasBillingResponsibility\"],\n  provenance: \"ADR-ONT-042; accepted by billing, compliance, and identity owners\"\n};",
     "language": "ts"
   },
   {
-    "ruleId": "validation-tests-reasoners-shapes",
-    "ruleTitle": "Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks",
+    "referenceId": "validation-tests-reasoners-shapes",
+    "referenceTitle": "Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks",
     "type": "bad",
     "code": "// Synthetic anti-pattern: release gate verifies only that files exist.\nexport const ontologyReleaseGate = {\n  parses: true,\n  filesPresent: [\"ontology.ttl\"],\n  semanticTests: []\n};",
     "language": "ts"
   },
   {
-    "ruleId": "validation-tests-reasoners-shapes",
-    "ruleTitle": "Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks",
+    "referenceId": "validation-tests-reasoners-shapes",
+    "referenceTitle": "Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks",
     "type": "good",
     "code": "type OntologyReleaseCheck =\n  | \"competency-questions-pass\"\n  | \"reasoner-consistency-pass\"\n  | \"no-unsatisfiable-classes\"\n  | \"shacl-production-samples-pass\"\n  | \"critical-pitfalls-zero\"\n  | \"mapping-tests-pass\";\n\nexport const ontologyReleaseGate: readonly OntologyReleaseCheck[] = [\n  \"competency-questions-pass\",\n  \"reasoner-consistency-pass\",\n  \"no-unsatisfiable-classes\",\n  \"shacl-production-samples-pass\",\n  \"critical-pitfalls-zero\",\n  \"mapping-tests-pass\"\n];",
     "language": "ts"

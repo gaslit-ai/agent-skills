@@ -12,7 +12,8 @@ export const SKILLS: Record<string, SkillConfig> = {
     title: 'Duke Dependency Generator',
     description: 'TypeScript architecture graph generation workflows',
     skillDir: join(SKILLS_DIR, 'duke-dependency-generator'),
-    rulesDir: join(SKILLS_DIR, 'duke-dependency-generator/rules'),
+    referencesDir: join(SKILLS_DIR, 'duke-dependency-generator/references'),
+    referencesFolder: 'references',
     metadataFile: join(SKILLS_DIR, 'duke-dependency-generator/metadata.json'),
     outputFile: join(SKILLS_DIR, 'duke-dependency-generator/AGENTS.md'),
     sectionMap: {
@@ -31,7 +32,8 @@ export const SKILLS: Record<string, SkillConfig> = {
     title: 'Refactoring Playbook',
     description: 'Evidence-based refactoring guidance for code bases',
     skillDir: join(SKILLS_DIR, 'refactoring-playbook'),
-    rulesDir: join(SKILLS_DIR, 'refactoring-playbook/rules'),
+    referencesDir: join(SKILLS_DIR, 'refactoring-playbook/references'),
+    referencesFolder: 'references',
     metadataFile: join(SKILLS_DIR, 'refactoring-playbook/metadata.json'),
     outputFile: join(SKILLS_DIR, 'refactoring-playbook/AGENTS.md'),
     sectionMap: {
@@ -47,7 +49,8 @@ export const SKILLS: Record<string, SkillConfig> = {
     title: 'Shared Ontologies',
     description: 'Evidence-based guidance for designing, evolving, and governing shared ontologies',
     skillDir: join(SKILLS_DIR, 'shared-ontologies'),
-    rulesDir: join(SKILLS_DIR, 'shared-ontologies/rules'),
+    referencesDir: join(SKILLS_DIR, 'shared-ontologies/references'),
+    referencesFolder: 'references',
     metadataFile: join(SKILLS_DIR, 'shared-ontologies/metadata.json'),
     outputFile: join(SKILLS_DIR, 'shared-ontologies/AGENTS.md'),
     sectionMap: {

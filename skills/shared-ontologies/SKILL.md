@@ -4,69 +4,52 @@ description: Evidence-based playbook for designing, evolving, and governing shar
 license: MIT
 metadata:
   author: duke
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Shared Ontologies
 
-Evidence-based guidance for shared ontologies in software systems. Grounded in 50+ peer-reviewed or canonical sources from ontology engineering, semantic web, software-engineering ontology, biomedical ontology, data integration, schema matching, and ontology evolution.
+Evidence-based guidance for shared ontologies. Each reference separates source-backed evidence from derived engineering rules; per-reference frontmatter records evidence strength and corroboration count.
 
-## Scope and Factuality Framing
+Each reference below is a separate file in `references/`; the agent loads only the references it needs for the current task. The fully expanded long-form guide lives in `AGENTS.md` for tools that follow the [AGENTS.md convention](https://agents.md) rather than the [Agent Skills spec](https://agentskills.io/specification).
 
-**Scope.** "Shared ontologies" in this skill means shared semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts — not single-service data models.
+## References
 
-**Factuality controls.** Each rule separates *source-backed evidence* synthesized from the cited literature from *derived engineering guidance* (the actionable rule). Per-rule frontmatter records `evidenceStrength` and `corroborationCount` (number of independent source families repeating the claim) in place of subjective confidence levels. Code examples are synthetic implementation sketches that illustrate the rule; they are not examples observed in, or claimed by, the cited papers.
+### 1. Requirements — Purpose, Scope, and Contract — **CRITICAL**
 
-## When to Apply
+A shared ontology becomes unbounded the moment it is treated as a list of preferred names. The ontology-engineering literature converges on two prerequisites before any term is minted: explicit competency questions and motivating scenarios that define the verification target, and explicit definitions, relations, and constraints that turn each term into a commitment rather than a label. Skip either and the ontology cannot be evaluated, scoped, or relied on at integration boundaries.
 
-- Introducing a shared vocabulary across services, teams, or organizations
-- Integrating data across systems that historically used distinct local schemas
-- Choosing ontology expressivity (RDF/SKOS vs. OWL profile vs. OWL DL vs. rules vs. SHACL)
-- Validating an ontology release before downstream consumers depend on it
-- Versioning a semantic change that affects published data, queries, or generated code
-- Aligning a new local schema with an existing reference or upper ontology
-- Reviewing a proposal that adds, renames, deprecates, or splits ontology terms
+- [`requirements-competency-questions`](./references/requirements-competency-questions.md) — Define Ontology Scope With Competency Questions Before Adding Shared Terms
+- [`requirements-semantic-contract`](./references/requirements-semantic-contract.md) — Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions
 
-## When Not to Apply
+### 2. Architecture — Reuse, Modularity, and Expressivity — **HIGH**
 
-- Designing the internal data model of a single bounded context with no cross-system consumers
-- Producing a one-off ETL mapping between two specific tables (no shared vocabulary asserted)
-- Greenfield UI labelling and copy work
-- Database schema migrations where no formal conceptualization is being committed to
+Architectural decisions — what to reuse from existing reference and upper ontologies, how to decompose into modules with stable interfaces, and which formalism to commit to — set the lifetime cost of the ontology. Monolithic vocabularies, locally-minted synonyms of well-known terms, and choosing a logic stronger than the required inference each create durable maintenance and reasoning overhead.
 
-## Rule Categories by Priority
+- [`architecture-weakest-formalism`](./references/architecture-weakest-formalism.md) — Choose Ontology Expressivity From the Required Inference and Validation Workload
+- [`architecture-modular-boundaries`](./references/architecture-modular-boundaries.md) — Modularize Shared Ontologies Around Stable Software and Data Boundaries
+- [`architecture-reuse-reference`](./references/architecture-reuse-reference.md) — Reuse Reference Ontologies When They Match the Competency Questions
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Requirements — purpose, scope, contract | CRITICAL | `requirements-` |
-| 2 | Architecture — reuse, modularity, expressivity | HIGH | `architecture-` |
-| 3 | Validation — release-gate checks | CRITICAL | `validation-` |
-| 4 | Evolution — versioning and mappings | CRITICAL | `evolution-` |
-| 5 | Governance — editorial workflow and measurement | HIGH | `governance-` |
+### 3. Validation — Release-Gate Checks — **CRITICAL**
 
-## Quick Reference
+A shared ontology is executable semantic infrastructure. Releases that ship without reasoner consistency checks, competency-question entailment, SHACL/ShEx data-shape validation, and empirically-grounded pitfall scans deliver distributed defects directly into downstream consumers — annotations, queries, generated code, and integration mappings inherit every undetected error.
 
-- `requirements-competency-questions` — Define ontology scope with competency questions before adding shared terms
-- `requirements-semantic-contract` — Treat shared ontology terms as semantic contracts, not naming conventions
-- `architecture-reuse-reference` — Reuse reference ontologies when they match the competency questions
-- `architecture-modular-boundaries` — Modularize shared ontologies around stable software and data boundaries
-- `architecture-weakest-formalism` — Choose ontology expressivity from the required inference and validation workload
-- `validation-tests-reasoners-shapes` — Validate ontology releases with competency tests, reasoners, shapes, and pitfall checks
-- `evolution-versioned-migrations` — Version ontology changes as semantic migrations
-- `evolution-mappings-first-class` — Make schema-to-ontology and ontology-to-ontology mappings first-class artifacts
-- `governance-editorial-workflow` — Govern shared ontologies with collaborative editorial workflow
-- `governance-operational-measurement` — Measure ontology value by operational interoperability, not term count
+- [`validation-tests-reasoners-shapes`](./references/validation-tests-reasoners-shapes.md) — Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks
 
-## How to Use
+### 4. Evolution — Versioning and Mappings — **CRITICAL**
 
-1. Pin **requirements** first — competency questions and scope are the evaluation oracle for every subsequent decision.
-2. Make **architecture** choices second — reuse what exists, modularize what you must mint, pick the weakest formalism that supports the required inference and validation workload.
-3. Define **validation** gates before consumers depend on the ontology — reasoner, CQ, SHACL, and pitfall scans.
-4. Plan **evolution** at the same time — every published term has a versioning, deprecation, and mapping policy from day one.
-5. Set **governance** explicitly — roles, proposal workflow, review, decision records, and operational measures that confirm the ontology is being used.
+Ontology changes affect data, APIs, queries, generated code, annotations, reasoning results, and downstream integrations. The two artefacts that keep change tractable are explicit versioning with provenance, deprecation, and migration rules, and first-class cross-ontology mappings that make heterogeneity visible, reviewable, and testable instead of hidden inside service code.
 
-Read individual rule files in `rules/` for examples. The compiled long-form guide is `AGENTS.md`.
+- [`evolution-mappings-first-class`](./references/evolution-mappings-first-class.md) — Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts
+- [`evolution-versioned-migrations`](./references/evolution-versioned-migrations.md) — Version Ontology Changes as Semantic Migrations
+
+### 5. Governance — Editorial Workflow and Measurement — **HIGH**
+
+A shared ontology encodes social agreement among stakeholders, so the editorial workflow and the value-measurement story are part of the engineering surface. Without explicit roles, proposal flow, domain-expert review, and operational measures of use (CQ pass rate, mapping reuse, adapter logic removed), the ontology drifts toward whichever local interpretation wins the last merge.
+
+- [`governance-editorial-workflow`](./references/governance-editorial-workflow.md) — Govern Shared Ontologies With Collaborative Editorial Workflow
+- [`governance-operational-measurement`](./references/governance-operational-measurement.md) — Measure Ontology Value by Operational Interoperability, Not Term Count
 
 ## Full Compiled Document
 
-For expanded guidance with grouped sections, see `AGENTS.md`.
+For the complete guide with every reference expanded inline (bad/good examples, citations, prerequisites), see [`AGENTS.md`](./AGENTS.md). It is the [AGENTS.md-convention](https://agents.md) fallback for tools that do not load individual references on demand.

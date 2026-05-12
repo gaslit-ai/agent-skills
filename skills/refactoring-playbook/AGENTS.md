@@ -18,24 +18,24 @@ Evidence-based playbook for refactoring code bases. Synthesizes foundational ref
 
 ## Table of Contents
 
-1. [Triggers — When and Why to Refactor](#1-triggers--when-and-why-to-refactor) — **CRITICAL**
+1. [Triggers — When and Why to Refactor](#1-triggers-—-when-and-why-to-refactor) — **CRITICAL**
    - 1.1 [Prioritize Files With High Relative Churn (Top-Decile Hotspots)](#11-prioritize-files-with-high-relative-churn-top-decile-hotspots)
    - 1.2 [Readability Improvements Are Evidence-Supported Refactor Goals](#12-readability-improvements-are-evidence-supported-refactor-goals)
    - 1.3 [Refactoring Preserves Observable Behavior](#13-refactoring-preserves-observable-behavior)
    - 1.4 [Start From Concrete Maintenance Pain, Not Aesthetic Preference](#14-start-from-concrete-maintenance-pain-not-aesthetic-preference)
-2. [Safety — How to Refactor Without Breaking Behavior](#2-safety--how-to-refactor-without-breaking-behavior) — **CRITICAL**
+2. [Safety — How to Refactor Without Breaking Behavior](#2-safety-—-how-to-refactor-without-breaking-behavior) — **CRITICAL**
    - 2.1 [Many Small Behavior-Preserving Transformations Beat One Large Redesign](#21-many-small-behavior-preserving-transformations-beat-one-large-redesign)
    - 2.2 [Rerun Tests, Type-Check, and Static Analysis After Every Refactor Batch](#22-rerun-tests-type-check-and-static-analysis-after-every-refactor-batch)
    - 2.3 [Separate Mechanical Edits From Behavior-Changing Edits at the Commit Boundary](#23-separate-mechanical-edits-from-behavior-changing-edits-at-the-commit-boundary)
    - 2.4 [Strengthen the Regression Net Before Risky Structural Change](#24-strengthen-the-regression-net-before-risky-structural-change)
-3. [Review — Collaboration and Merge Discipline](#3-review--collaboration-and-merge-discipline) — **HIGH**
+3. [Review — Collaboration and Merge Discipline](#3-review-—-collaboration-and-merge-discipline) — **HIGH**
    - 3.1 [Commit Messages Encode Refactor Intent, Not Just "Cleanup](#31-commit-messages-encode-refactor-intent-not-just-cleanup)
    - 3.2 [Keep Refactor PRs Small and Short-Lived](#32-keep-refactor-prs-small-and-short-lived)
-4. [Automation — Tools, Codemods, and LLM Assistance](#4-automation--tools-codemods-and-llm-assistance) — **HIGH**
+4. [Automation — Tools, Codemods, and LLM Assistance](#4-automation-—-tools,-codemods,-and-llm-assistance) — **HIGH**
    - 4.1 [LLM Migration Tools Accelerate Mechanics; Per-Patch Oversight Stays In-Loop](#41-llm-migration-tools-accelerate-mechanics-per-patch-oversight-stays-in-loop)
    - 4.2 [LLM-Assisted Refactoring Is Strongest on Local, Mechanically Scoped Transformations](#42-llm-assisted-refactoring-is-strongest-on-local-mechanically-scoped-transformations)
    - 4.3 [Prefer Semantic-Aware Codemods Over Regex Search-and-Replace](#43-prefer-semantic-aware-codemods-over-regex-search-and-replace)
-5. [Measurement — Judging Refactor Success](#5-measurement--judging-refactor-success) — **MEDIUM**
+5. [Measurement — Judging Refactor Success](#5-measurement-—-judging-refactor-success) — **MEDIUM**
    - 5.1 [Judge Refactor Success With a Multi-Dimensional Portfolio of Indicators](#51-judge-refactor-success-with-a-multi-dimensional-portfolio-of-indicators)
    - 5.2 [Smell Reduction and Static-Analysis Clean Are Not Behavior-Preservation Oracles](#52-smell-reduction-and-static-analysis-clean-are-not-behavior-preservation-oracles)
 

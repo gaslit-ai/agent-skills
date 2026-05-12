@@ -4,10 +4,10 @@ A structured skill for creating deterministic architecture and dependency graph 
 
 ## Structure
 
-- `rules/` - source rules
-- `metadata.json` - version and abstract metadata
-- `SKILL.md` - runtime trigger and quick guidance
-- `AGENTS.md` - compiled long-form guide (generated)
+- `references/` - source references (one file per reference; loaded on demand)
+- `metadata.json` - skill-level metadata (name, description, license, body, citations)
+- `SKILL.md` - generated: spec entrypoint with TOC linking into `references/`
+- `AGENTS.md` - generated: long-form fallback for the AGENTS.md convention
 
 ## Getting Started
 

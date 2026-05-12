@@ -1,17 +1,21 @@
 import { readFile } from 'fs/promises'
 import { basename } from 'path'
-import { Rule, ImpactLevel } from './types.js'
+import { Reference, ImpactLevel } from './types.js'
 
-export interface RuleFile {
+export interface ReferenceFile {
   section: number
   subsection?: number
-  rule: Rule
+  reference: Reference
+  /** Basename of the source file (e.g. `triggers-pain-driven.md`). Used by the
+   *  SKILL.md generator to emit `./references/<file>.md` links that resolve to
+   *  the file each reference actually came from, irrespective of post-parse sorting. */
+  filename: string
 }
 
-export async function parseRuleFile(
+export async function parseReferenceFile(
   filePath: string,
   sectionMap: Record<string, number>
-): Promise<RuleFile> {
+): Promise<ReferenceFile> {
   const rawContent = await readFile(filePath, 'utf-8')
   const content = rawContent.replace(/\r\n/g, '\n')
 
@@ -34,25 +38,25 @@ export async function parseRuleFile(
     }
   }
 
-  const ruleLines = content.slice(contentStart).trim().split('\n')
+  const bodyLines = content.slice(contentStart).trim().split('\n')
   let title = ''
   let titleLine = 0
 
-  for (let i = 0; i < ruleLines.length; i++) {
-    if (ruleLines[i].startsWith('##')) {
-      title = ruleLines[i].replace(/^##+\s*/, '').trim()
+  for (let i = 0; i < bodyLines.length; i++) {
+    if (bodyLines[i].startsWith('##')) {
+      title = bodyLines[i].replace(/^##+\s*/, '').trim()
       titleLine = i
       break
     }
   }
 
-  let impact: Rule['impact'] = 'MEDIUM'
+  let impact: Reference['impact'] = 'MEDIUM'
   let impactDescription = ''
   let explanation = ''
-  let references: string[] = []
-  const examples: Rule['examples'] = []
+  let citations: string[] = []
+  const examples: Reference['examples'] = []
 
-  let currentExample: Rule['examples'][number] | null = null
+  let currentExample: Reference['examples'][number] | null = null
   let inCodeBlock = false
   let codeBlockLanguage = 'typescript'
   let codeBlockContent: string[] = []
@@ -71,8 +75,8 @@ export async function parseRuleFile(
       .filter(Boolean)
   }
 
-  for (let i = titleLine + 1; i < ruleLines.length; i++) {
-    const line = ruleLines[i]
+  for (let i = titleLine + 1; i < bodyLines.length; i++) {
+    const line = bodyLines[i]
 
     if (line.includes('**Impact:')) {
       const match = line.match(/\*\*Impact:\s*(\w+(?:-\w+)?)\s*(?:\(([^)]+)\))?/i)
@@ -147,7 +151,7 @@ export async function parseRuleFile(
 
       const inlineUrls = extractUrls(line)
       if (inlineUrls.length > 0) {
-        references.push(...inlineUrls)
+        citations.push(...inlineUrls)
       }
       inReferencesList = true
       continue
@@ -161,7 +165,7 @@ export async function parseRuleFile(
       if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
         const urls = extractUrls(trimmed)
         if (urls.length > 0) {
-          references.push(...urls)
+          citations.push(...urls)
           continue
         }
       }
@@ -196,7 +200,7 @@ export async function parseRuleFile(
     }
   }
 
-  const rule: Rule = {
+  const reference: Reference = {
     id: '',
     title: frontmatter.title || title,
     section,
@@ -204,11 +208,11 @@ export async function parseRuleFile(
     impactDescription: frontmatter.impactDescription || impactDescription,
     explanation: explanation.trim(),
     examples,
-    references,
+    references: citations,
     tags: frontmatter.tags
       ? frontmatter.tags.split(',').map((tag) => tag.trim())
       : undefined
   }
 
-  return { section, subsection: 0, rule }
+  return { section, subsection: 0, reference, filename }
 }

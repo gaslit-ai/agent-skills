@@ -1,15 +1,15 @@
 ---
-title: Rule Title Here
+title: Reference Title Here
 impact: MEDIUM
 impactDescription: Optional impact detail
 tags: tag1, tag2
 ---
 
-## Rule Title Here
+## Reference Title Here
 
 **Impact: MEDIUM**
 
-Brief explanation of the rule and why it matters.
+Brief explanation of the reference and why it matters.
 
 **Incorrect (what fails):**
 

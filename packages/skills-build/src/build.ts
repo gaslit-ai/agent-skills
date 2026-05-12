@@ -2,8 +2,8 @@
 
 import { readdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { ImpactLevel, Section, SkillConfig } from './types.js'
-import { parseRuleFile } from './parser.js'
+import { ImpactLevel, Reference, Section, SkillConfig } from './types.js'
+import { parseReferenceFile } from './parser.js'
 import { DEFAULT_SKILL, SKILLS } from './config.js'
 
 const args = process.argv.slice(2)
@@ -18,22 +18,25 @@ function incrementVersion(version: string): string {
   return parts.join('.')
 }
 
-function slug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '')
+interface SkillMetadata {
+  name?: string
+  description?: string
+  license?: string
+  allowedTools?: string
+  author?: string
+  version: string
+  organization: string
+  date: string
+  abstract: string
+  body?: string
+  references?: string[]
 }
 
-function generateMarkdown(
+/** Long-form AGENTS.md output — every reference expanded inline. The
+ *  AGENTS.md-convention fallback for tools that don't traverse references/. */
+function generateAgentsMd(
   sections: Section[],
-  metadata: {
-    version: string
-    organization: string
-    date: string
-    abstract: string
-    references?: string[]
-  },
+  metadata: SkillMetadata,
   skillConfig: SkillConfig
 ): string {
   let md = `# ${skillConfig.title}\n\n`
@@ -50,12 +53,16 @@ function generateMarkdown(
   md += `## Table of Contents\n\n`
 
   for (const section of sections) {
-    const sectionAnchor = slug(`${section.number}. ${section.title}`)
-    md += `${section.number}. [${section.title}](#${sectionAnchor}) — **${section.impact}**\n`
+    md += `${section.number}. [${section.title}](#${section.number}-${section.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')}) — **${section.impact}**\n`
 
-    for (const rule of section.rules) {
-      const ruleAnchor = slug(`${rule.id} ${rule.title}`)
-      md += `   - ${rule.id} [${rule.title}](#${ruleAnchor})\n`
+    for (const reference of section.references) {
+      const anchor = `${reference.id} ${reference.title}`
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]/g, '')
+      md += `   - ${reference.id} [${reference.title}](#${anchor})\n`
     }
   }
 
@@ -68,12 +75,12 @@ function generateMarkdown(
       md += `${section.introduction}\n\n`
     }
 
-    for (const rule of section.rules) {
-      md += `### ${rule.id} ${rule.title}\n\n`
-      md += `**Impact: ${rule.impact}${rule.impactDescription ? ` (${rule.impactDescription})` : ''}**\n\n`
-      md += `${rule.explanation}\n\n`
+    for (const reference of section.references) {
+      md += `### ${reference.id} ${reference.title}\n\n`
+      md += `**Impact: ${reference.impact}${reference.impactDescription ? ` (${reference.impactDescription})` : ''}**\n\n`
+      md += `${reference.explanation}\n\n`
 
-      for (const example of rule.examples) {
+      for (const example of reference.examples) {
         md += `**${example.label}${example.description ? `: ${example.description}` : ''}**\n\n`
         if (example.code.trim()) {
           md += `\`\`\`${example.language ?? 'typescript'}\n${example.code}\n\`\`\`\n\n`
@@ -83,8 +90,8 @@ function generateMarkdown(
         }
       }
 
-      if (rule.references && rule.references.length > 0) {
-        md += `Reference: ${rule.references
+      if (reference.references && reference.references.length > 0) {
+        md += `Reference: ${reference.references
           .map((ref) => `[${ref}](${ref})`)
           .join(', ')}\n\n`
       }
@@ -103,44 +110,101 @@ function generateMarkdown(
   return md
 }
 
+/** Spec-compliant SKILL.md — frontmatter + body + per-section index that links
+ *  into individual ./references/<file>.md files. Loaded into context on
+ *  activation; references load on demand. */
+function generateSkillMd(
+  sections: Section[],
+  metadata: SkillMetadata,
+  skillConfig: SkillConfig,
+  filenameByReference: Map<Reference, string>
+): string {
+  const refsFolder = skillConfig.referencesFolder
+
+  const author = metadata.author ?? 'duke'
+  const name = metadata.name ?? skillConfig.name
+
+  let md = `---\n`
+  md += `name: ${name}\n`
+  md += `description: ${metadata.description ?? skillConfig.description}\n`
+  if (metadata.license) {
+    md += `license: ${metadata.license}\n`
+  }
+  if (metadata.allowedTools) {
+    md += `allowed-tools: ${metadata.allowedTools}\n`
+  }
+  md += `metadata:\n`
+  md += `  author: ${author}\n`
+  md += `  version: "${metadata.version}"\n`
+  md += `---\n\n`
+
+  md += `# ${skillConfig.title}\n\n`
+
+  if (metadata.body) {
+    md += `${metadata.body}\n\n`
+  }
+
+  md += `## References\n\n`
+  for (const section of sections) {
+    const impact = section.impactDescription
+      ? `${section.impact} — ${section.impactDescription}`
+      : section.impact
+    md += `### ${section.number}. ${section.title} — **${impact}**\n\n`
+    if (section.introduction) {
+      md += `${section.introduction}\n\n`
+    }
+    for (const reference of section.references) {
+      const file = filenameByReference.get(reference) ?? `${reference.id}.md`
+      md += `- [\`${file.replace(/\.md$/, '')}\`](./${refsFolder}/${file}) — ${reference.title}\n`
+    }
+    md += `\n`
+  }
+
+  md += `## Full Compiled Document\n\n`
+  md += `For the complete guide with every reference expanded inline (bad/good examples, citations, prerequisites), see [\`AGENTS.md\`](./AGENTS.md). It is the [AGENTS.md-convention](https://agents.md) fallback for tools that do not load individual references on demand.\n`
+
+  return md
+}
+
 async function buildSkill(skillConfig: SkillConfig): Promise<void> {
   console.log(`\nBuilding ${skillConfig.name}...`)
 
-  const files = await readdir(skillConfig.rulesDir)
-  const ruleFiles = files
+  const files = await readdir(skillConfig.referencesDir)
+  const referenceFiles = files
     .filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
     .sort()
 
-  const parsedRules = []
-  for (const file of ruleFiles) {
-    const parsed = await parseRuleFile(join(skillConfig.rulesDir, file), skillConfig.sectionMap)
-    parsedRules.push(parsed)
+  const parsed: Awaited<ReturnType<typeof parseReferenceFile>>[] = []
+  for (const file of referenceFiles) {
+    parsed.push(await parseReferenceFile(join(skillConfig.referencesDir, file), skillConfig.sectionMap))
   }
 
   const sectionsMap = new Map<number, Section>()
-  for (const { section, rule } of parsedRules) {
+  const filenameByReference = new Map<Reference, string>()
+  for (const { section, reference, filename } of parsed) {
     if (!sectionsMap.has(section)) {
       sectionsMap.set(section, {
         number: section,
         title: `Section ${section}`,
-        impact: rule.impact,
-        rules: []
+        impact: reference.impact,
+        references: []
       })
     }
-    sectionsMap.get(section)!.rules.push(rule)
+    sectionsMap.get(section)!.references.push(reference)
+    filenameByReference.set(reference, filename)
   }
 
   sectionsMap.forEach((section) => {
-    section.rules.sort((a, b) => a.title.localeCompare(b.title, 'en-US', { sensitivity: 'base' }))
-    section.rules.forEach((rule, idx) => {
-      rule.id = `${section.number}.${idx + 1}`
-      rule.subsection = idx + 1
+    section.references.sort((a, b) => a.title.localeCompare(b.title, 'en-US', { sensitivity: 'base' }))
+    section.references.forEach((reference, idx) => {
+      reference.id = `${section.number}.${idx + 1}`
+      reference.subsection = idx + 1
     })
   })
 
   const sections = Array.from(sectionsMap.values()).sort((a, b) => a.number - b.number)
 
-  const sectionsContent = await readFile(join(skillConfig.rulesDir, '_sections.md'), 'utf-8')
+  const sectionsContent = await readFile(join(skillConfig.referencesDir, '_sections.md'), 'utf-8')
   const sectionBlocks = sectionsContent.split(/(?=^## \d+\. )/m).filter(Boolean)
 
   for (const block of sectionBlocks) {
@@ -166,17 +230,17 @@ async function buildSkill(skillConfig: SkillConfig): Promise<void> {
     }
   }
 
-  let metadata = {
+  let metadata: SkillMetadata = {
     version: '0.1.0',
     organization: 'Duke Engineering',
     date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
     abstract: `Skill guidance for ${skillConfig.description}.`,
-    references: [] as string[]
+    references: []
   }
 
   try {
     const content = await readFile(skillConfig.metadataFile, 'utf-8')
-    metadata = JSON.parse(content)
+    metadata = { ...metadata, ...JSON.parse(content) }
   } catch {
     // keep fallback metadata
   }
@@ -186,20 +250,18 @@ async function buildSkill(skillConfig: SkillConfig): Promise<void> {
     metadata.version = incrementVersion(previous)
     console.log(`Upgraded version ${previous} -> ${metadata.version}`)
     await writeFile(skillConfig.metadataFile, JSON.stringify(metadata, null, 2) + '\n', 'utf-8')
-
-    const skillFile = join(skillConfig.skillDir, 'SKILL.md')
-    const skillContent = await readFile(skillFile, 'utf-8')
-    const updated = skillContent.replace(
-      /^(---[\s\S]*?version:\s*)"[^"]*"([\s\S]*?---)$/m,
-      `$1"${metadata.version}"$2`
-    )
-    await writeFile(skillFile, updated, 'utf-8')
   }
 
-  const markdown = generateMarkdown(sections, metadata, skillConfig)
-  await writeFile(skillConfig.outputFile, markdown, 'utf-8')
-
+  // 1. AGENTS.md (long-form fallback)
+  const agentsMd = generateAgentsMd(sections, metadata, skillConfig)
+  await writeFile(skillConfig.outputFile, agentsMd, 'utf-8')
   console.log(`✓ Built ${skillConfig.outputFile}`)
+
+  // 2. SKILL.md (spec entrypoint, always generated)
+  const skillMdPath = skillConfig.skillMdFile ?? join(skillConfig.skillDir, 'SKILL.md')
+  const skillMd = generateSkillMd(sections, metadata, skillConfig, filenameByReference)
+  await writeFile(skillMdPath, skillMd, 'utf-8')
+  console.log(`✓ Built ${skillMdPath}`)
 }
 
 async function main(): Promise<void> {

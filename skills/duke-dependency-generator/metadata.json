@@ -1,8 +1,13 @@
 {
+  "name": "duke-dependency-generator",
+  "description": "Dependency and architecture graph generation playbook for TypeScript repositories. Use when implementing or upgrading `npm run arch` style workflows with dependency-cruiser plus ts-morph call/type graphs. Triggers on creating or refactoring architecture graph generation workflows.",
+  "license": "MIT",
+  "author": "duke",
   "version": "0.1.0",
   "organization": "Duke Engineering",
   "date": "March 2026",
   "abstract": "Implementation guide for adding deterministic architecture graph generation to TypeScript repositories. This skill focuses on install-first bootstrap, dependency-cruiser initialization, scope modeling, stable graph output, strict CLI contracts, and repeatability checks.",
+  "body": "Principal-level implementation guide for adding reproducible architecture graph generation (dependency, call, and type graphs) to any TypeScript repository. Built on `dependency-cruiser` + `ts-morph` + `fast-glob`.\n\nEach reference below is a separate file in `references/`; the agent loads only the references it needs for the current task. The fully expanded long-form guide lives in `AGENTS.md` for tools that follow the [AGENTS.md convention](https://agents.md) rather than the [Agent Skills spec](https://agentskills.io/specification).\n\n## First Step (Required)\n\nInstall the analysis libraries before doing anything else:\n\n```bash\nnpm install --save-dev dependency-cruiser ts-morph fast-glob\n```",
   "references": [
     "https://github.com/sverweij/dependency-cruiser",
     "https://ts-morph.com/",

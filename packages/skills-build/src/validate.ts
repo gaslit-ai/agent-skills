@@ -3,8 +3,8 @@
 import { readdir } from 'fs/promises'
 import { join } from 'path'
 import { DEFAULT_SKILL, SKILLS } from './config.js'
-import { Rule, SkillConfig } from './types.js'
-import { parseRuleFile } from './parser.js'
+import { Reference, SkillConfig } from './types.js'
+import { parseReferenceFile } from './parser.js'
 
 interface ValidationError {
   skill: string
@@ -12,31 +12,29 @@ interface ValidationError {
   message: string
 }
 
-function validateRule(rule: Rule, skill: string, file: string): ValidationError[] {
+function validateReference(reference: Reference, skill: string, file: string): ValidationError[] {
   const errors: ValidationError[] = []
 
-  if (!rule.title.trim()) {
+  if (!reference.title.trim()) {
     errors.push({ skill, file, message: 'Missing title' })
   }
 
-  if (!rule.explanation.trim()) {
+  if (!reference.explanation.trim()) {
     errors.push({ skill, file, message: 'Missing explanation body' })
   }
 
-  if (!rule.examples || rule.examples.length === 0) {
+  if (!reference.examples || reference.examples.length === 0) {
     errors.push({ skill, file, message: 'Missing examples' })
     return errors
   }
 
-  const codeExamples = rule.examples.filter((example) => example.code.trim().length > 0)
+  const codeExamples = reference.examples.filter((example) => example.code.trim().length > 0)
   if (codeExamples.length === 0) {
     errors.push({ skill, file, message: 'No code examples found' })
     return errors
   }
 
-  // Use word boundaries so `Incorrect` does NOT match the "good" regex via the
-  // substring `correct`. Without `\b`, a single example labeled "Incorrect" would
-  // satisfy both hasBad and hasGood and the rule would falsely validate.
+  // Word-boundary guards: `Incorrect` must not classify as `correct`.
   const hasBad = codeExamples.some((example) => /\b(incorrect|wrong|bad)\b/i.test(example.label))
   const hasGood = codeExamples.some((example) => /\b(correct|good|usage|implementation|example)\b/i.test(example.label))
 
@@ -45,23 +43,23 @@ function validateRule(rule: Rule, skill: string, file: string): ValidationError[
   }
 
   const validImpacts = ['CRITICAL', 'HIGH', 'MEDIUM-HIGH', 'MEDIUM', 'LOW-MEDIUM', 'LOW']
-  if (!validImpacts.includes(rule.impact)) {
-    errors.push({ skill, file, message: `Invalid impact level: ${rule.impact}` })
+  if (!validImpacts.includes(reference.impact)) {
+    errors.push({ skill, file, message: `Invalid impact level: ${reference.impact}` })
   }
 
   return errors
 }
 
 async function validateSkill(skill: SkillConfig): Promise<ValidationError[]> {
-  const files = await readdir(skill.rulesDir)
-  const ruleFiles = files.filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
+  const files = await readdir(skill.referencesDir)
+  const referenceFiles = files.filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
 
   const errors: ValidationError[] = []
 
-  for (const file of ruleFiles) {
+  for (const file of referenceFiles) {
     try {
-      const { rule } = await parseRuleFile(join(skill.rulesDir, file), skill.sectionMap)
-      errors.push(...validateRule(rule, skill.name, file))
+      const { reference } = await parseReferenceFile(join(skill.referencesDir, file), skill.sectionMap)
+      errors.push(...validateReference(reference, skill.name, file))
     } catch (error) {
       errors.push({
         skill: skill.name,
@@ -72,7 +70,7 @@ async function validateSkill(skill: SkillConfig): Promise<ValidationError[]> {
   }
 
   if (errors.length === 0) {
-    console.log(`✓ ${skill.name}: ${ruleFiles.length} rule files valid`)
+    console.log(`✓ ${skill.name}: ${referenceFiles.length} reference files valid`)
   }
 
   return errors
@@ -84,16 +82,16 @@ async function main(): Promise<void> {
   const skillArg = args.find((arg) => arg.startsWith('--skill='))
   const skillName = skillArg ? skillArg.split('=')[1] : null
 
-  const targets: SkillConfig[] = buildAll
-    ? Object.values(SKILLS)
-    : skillName
-      ? [SKILLS[skillName]].filter(Boolean)
-      : [SKILLS[DEFAULT_SKILL]]
-
   if (skillName && !SKILLS[skillName]) {
     console.error(`Unknown skill: ${skillName}`)
     process.exit(1)
   }
+
+  const targets: SkillConfig[] = buildAll
+    ? Object.values(SKILLS)
+    : skillName
+      ? [SKILLS[skillName]]
+      : [SKILLS[DEFAULT_SKILL]]
 
   const errors: ValidationError[] = []
   for (const skill of targets) {

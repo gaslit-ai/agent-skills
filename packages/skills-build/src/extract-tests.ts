@@ -3,10 +3,10 @@
 import { readdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { DEFAULT_SKILL, SKILLS, resolveTestCasesFile } from './config.js'
-import { parseRuleFile } from './parser.js'
+import { parseReferenceFile } from './parser.js'
 import { SkillConfig, TestCase } from './types.js'
 
-function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): TestCase[] {
+function extractTestCases(referenceId: string, referenceTitle: string, examples: any[]): TestCase[] {
   const tests: TestCase[] = []
 
   for (const example of examples) {
@@ -19,8 +19,8 @@ function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): T
     }
 
     tests.push({
-      ruleId,
-      ruleTitle,
+      referenceId,
+      referenceTitle,
       type: isBad ? 'bad' : 'good',
       code: example.code,
       language: example.language ?? 'typescript',
@@ -32,14 +32,14 @@ function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): T
 }
 
 async function extractForSkill(skill: SkillConfig): Promise<void> {
-  const files = await readdir(skill.rulesDir)
-  const ruleFiles = files.filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
+  const files = await readdir(skill.referencesDir)
+  const referenceFiles = files.filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
 
   const allTests: TestCase[] = []
 
-  for (const file of ruleFiles) {
-    const { rule } = await parseRuleFile(join(skill.rulesDir, file), skill.sectionMap)
-    const tests = extractTestCases(rule.id || file.replace('.md', ''), rule.title, rule.examples)
+  for (const file of referenceFiles) {
+    const { reference } = await parseReferenceFile(join(skill.referencesDir, file), skill.sectionMap)
+    const tests = extractTestCases(reference.id || file.replace('.md', ''), reference.title, reference.examples)
     allTests.push(...tests)
   }
 

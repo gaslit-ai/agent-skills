@@ -9,51 +9,68 @@ metadata:
 
 # Duke Dependency Generator
 
-Principal-level implementation skill for adding reproducible architecture graph generation to any TypeScript repository.
+Principal-level implementation guide for adding reproducible architecture graph generation (dependency, call, and type graphs) to any TypeScript repository. Built on `dependency-cruiser` + `ts-morph` + `fast-glob`.
+
+Each reference below is a separate file in `references/`; the agent loads only the references it needs for the current task. The fully expanded long-form guide lives in `AGENTS.md` for tools that follow the [AGENTS.md convention](https://agents.md) rather than the [Agent Skills spec](https://agentskills.io/specification).
 
 ## First Step (Required)
 
-Install required analysis libraries before doing anything else:
+Install the analysis libraries before doing anything else:
 
 ```bash
 npm install --save-dev dependency-cruiser ts-morph fast-glob
 ```
 
-## When to Apply
+## References
 
-- Adding `npm run arch` to a repo
-- Rebuilding architecture graph tooling in an existing TypeScript codebase
-- Hardening deterministic graph output for docs, reviews, or CI
-- Debugging architecture drift and coupling issues
+### 1. Bootstrap and Toolchain — **CRITICAL**
 
-## Rule Categories by Priority
+Installation and initialization mistakes are the most common cause of failed architecture workflows.
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Bootstrap and Toolchain | CRITICAL | `bootstrap-` |
-| 2 | Scope and Project Model | CRITICAL | `scope-` |
-| 3 | Dependency Graph Generation | HIGH | `deps-` |
-| 4 | Type Graph Generation | HIGH | `types-` |
-| 5 | Callgraph Generation | HIGH | `callgraph-` |
-| 6 | CLI Contract | HIGH | `cli-` |
-| 7 | Verification and Determinism | MEDIUM | `verify-` |
-| 8 | Operational Hygiene | MEDIUM | `ops-` |
+- [`bootstrap-install-toolchain`](./references/bootstrap-install-toolchain.md) — Install Required Analysis Libraries Before Any Init Step
 
-## Quick Reference
+### 2. Scope and Project Model — **CRITICAL**
 
-- `bootstrap-install-toolchain` - Install required libraries first
-- `scope-tsconfig-arch` - Use dedicated analysis tsconfig
-- `deps-merge-base-config` - Merge with generated depcruise config
-- `types-deterministic-ids-and-sort` - Keep type graph IDs stable and sorted
-- `callgraph-entrypoint-selection` - Seed callgraph from real ingress files
-- `cli-validate-arguments` - Fail fast for missing/invalid flags
-- `verify-repeatability` - Diff reruns to prove deterministic output
-- `ops-document-gotchas` - Keep recurring traps explicit in docs
+Graph quality depends on accurate include/exclude scope and a dedicated analysis TS project.
 
-## How to Use
+- [`scope-tsconfig-arch`](./references/scope-tsconfig-arch.md) — Use a Dedicated tsconfig.arch.json for Analysis Scope
 
-Read rule files in `rules/`, then run the build package to regenerate compiled outputs.
+### 3. Dependency Graph Generation — **HIGH**
+
+Dependency graph customization must preserve repository-specific resolver behavior.
+
+- [`deps-merge-base-config`](./references/deps-merge-base-config.md) — Merge Mermaid Output Options with Generated depcruise Config
+
+### 4. Type Graph Generation — **HIGH**
+
+Type graph output must remain bounded and deterministic to stay useful in large repositories.
+
+- [`types-deterministic-ids-and-sort`](./references/types-deterministic-ids-and-sort.md) — Keep Type Graph IDs and Ordering Deterministic
+
+### 5. Callgraph Generation — **HIGH**
+
+Entrypoint selection is the main signal control for callgraph value and noise.
+
+- [`callgraph-entrypoint-selection`](./references/callgraph-entrypoint-selection.md) — Seed Callgraph from Real Ingress Entrypoints
+
+### 6. CLI Contract — **HIGH**
+
+Strict argument validation prevents confusing runtime failures and non-deterministic behavior.
+
+- [`cli-validate-arguments`](./references/cli-validate-arguments.md) — Validate CLI Arguments Before Execution
+
+### 7. Verification and Determinism — **MEDIUM**
+
+Deterministic outputs allow diff-based review and CI enforcement.
+
+- [`verify-repeatability`](./references/verify-repeatability.md) — Prove Repeatability with Diff-Based Re-Runs
+
+### 8. Operational Hygiene — **MEDIUM**
+
+Keep implementation gotchas explicit so teams do not rediscover the same failure modes.
+
+- [`ops-document-gotchas`](./references/ops-document-gotchas.md) — Keep a Living GOTCHA Log for Recurring Failure Modes
 
 ## Full Compiled Document
 
-For expanded guidance, see `AGENTS.md`.
+For the complete guide with every reference expanded inline (bad/good examples, citations, prerequisites), see [`AGENTS.md`](./AGENTS.md). It is the [AGENTS.md-convention](https://agents.md) fallback for tools that do not load individual references on demand.

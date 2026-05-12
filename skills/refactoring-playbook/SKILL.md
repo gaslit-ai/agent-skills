@@ -12,58 +12,50 @@ metadata:
 
 Evidence-based guidance for refactoring code bases. Grounded in primary studies from ACM/IEEE venues, industrial reports, and recent AI-assisted refactoring evaluations.
 
-## When to Apply
+Each reference below is a separate file in `references/`; the agent loads only the references it needs for the current task. The fully expanded long-form guide (with bad/good code examples inlined) lives in `AGENTS.md` for tools that follow the [AGENTS.md convention](https://agents.md) rather than the [Agent Skills spec](https://agentskills.io/specification).
 
-- Planning a refactor and deciding whether it is worth doing now
-- Reviewing a PR that mixes refactoring with feature or bug work
-- Choosing between manual, IDE, codemod, or LLM-assisted refactoring
-- Defining success criteria before declaring a refactor "done"
-- Scoping a large migration (framework, library, or API)
+## References
 
-## When Not to Apply
+### 1. Triggers — When and Why to Refactor — **CRITICAL**
 
-- Pure feature work with no structural cleanup intent
-- Pure bug fixes that do not touch surrounding structure
-- Greenfield design — the playbook is about restructuring existing code
+Refactoring without a clear trigger costs effort and creates merge cost without buying back maintenance time. Mining studies show real refactoring is driven by concrete pain — change-frequency, comprehension difficulty, review feedback, or impending API change — not by aesthetic preference.
 
-## Rule Categories by Priority
+- [`triggers-hot-files`](./references/triggers-hot-files.md) — Prioritize Files With High Relative Churn (Top-Decile Hotspots)
+- [`triggers-readability`](./references/triggers-readability.md) — Readability Improvements Are Evidence-Supported Refactor Goals
+- [`triggers-behavior-preserving`](./references/triggers-behavior-preserving.md) — Refactoring Preserves Observable Behavior
+- [`triggers-pain-driven`](./references/triggers-pain-driven.md) — Start From Concrete Maintenance Pain, Not Aesthetic Preference
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Triggers — when and why to refactor | CRITICAL | `triggers-` |
-| 2 | Safety — how to refactor without breaking behavior | CRITICAL | `safety-` |
-| 3 | Review — collaboration and merge discipline | HIGH | `review-` |
-| 4 | Automation — tools, codemods, and LLM assistance | HIGH | `automation-` |
-| 5 | Measurement — judging refactor success | MEDIUM | `measure-` |
+### 2. Safety — How to Refactor Without Breaking Behavior — **CRITICAL**
 
-## Quick Reference
+Refactoring is defined by behavior preservation. Most refactor-induced bugs trace to one of four failures: oversized step, weak regression net, mechanical edits tangled with behavior changes, or no verification after the change. Treat all four as non-negotiable.
 
-- `triggers-behavior-preserving` — refactoring preserves external behavior; if behavior changes, it is not refactoring
-- `triggers-pain-driven` — start from concrete maintenance pain, not aesthetic preference
-- `triggers-hot-files` — prioritize files that change often or repeatedly block edits
-- `triggers-readability` — readability and comprehension are first-class refactor goals
-- `safety-small-steps` — many small transformations beat one large redesign
-- `safety-tests-first` — strengthen the regression net before risky structural change
-- `safety-separate-mechanical` — separate mechanical edits from behavior-changing edits
-- `safety-verify-after` — rerun tests and static analysis after every refactor batch
-- `review-small-prs` — keep refactor PRs small and short-lived
-- `review-intent-commits` — commit messages explain refactor intent, not just "cleanup"
-- `automation-semantic-tools` — prefer semantic codemods over regex search-and-replace
-- `automation-llm-local` — LLM assistance is strongest on local, systematic transformations
-- `automation-keep-oversight` — LLMs accelerate migration mechanics; they do not replace tests or review
-- `measure-portfolio` — judge with a portfolio of indicators, not a single metric
-- `measure-smell-not-safety` — smell reduction is not proof of semantic safety
+- [`safety-small-steps`](./references/safety-small-steps.md) — Many Small Behavior-Preserving Transformations Beat One Large Redesign
+- [`safety-verify-after`](./references/safety-verify-after.md) — Rerun Tests, Type-Check, and Static Analysis After Every Refactor Batch
+- [`safety-separate-mechanical`](./references/safety-separate-mechanical.md) — Separate Mechanical Edits From Behavior-Changing Edits at the Commit Boundary
+- [`safety-tests-first`](./references/safety-tests-first.md) — Strengthen the Regression Net Before Risky Structural Change
 
-## How to Use
+### 3. Review — Collaboration and Merge Discipline — **HIGH**
 
-1. Identify the **trigger** — why is this refactor happening now?
-2. Pick the **safety** rules that apply to the scope of change.
-3. Choose **automation** only when the transformation is repetitive and analyzable.
-4. Plan **review** before opening the PR — what is the smallest reviewable unit?
-5. Define **measurement** up front — what evidence will declare success?
+Refactoring PRs carry measurably higher churn, longer merge latency, and more review discussion than other PRs. Discipline at the PR boundary — small scope, explicit intent, narrated commits — is what keeps that overhead bounded.
 
-Read individual rule files in `rules/` for examples. The compiled long-form guide is `AGENTS.md`.
+- [`review-intent-commits`](./references/review-intent-commits.md) — Commit Messages Encode Refactor Intent, Not Just "Cleanup
+- [`review-small-prs`](./references/review-small-prs.md) — Keep Refactor PRs Small and Short-Lived
+
+### 4. Automation — Tools, Codemods, and LLM Assistance — **HIGH**
+
+Automation pays off for repetitive, semantically analyzable change at repository scale. It is unreliable for context-heavy design decisions. Pick the lightest tool that understands the language semantics, and never let LLM speed remove human oversight.
+
+- [`automation-keep-oversight`](./references/automation-keep-oversight.md) — LLM Migration Tools Accelerate Mechanics; Per-Patch Oversight Stays In-Loop
+- [`automation-llm-local`](./references/automation-llm-local.md) — LLM-Assisted Refactoring Is Strongest on Local, Mechanically Scoped Transformations
+- [`automation-semantic-tools`](./references/automation-semantic-tools.md) — Prefer Semantic-Aware Codemods Over Regex Search-and-Replace
+
+### 5. Measurement — Judging Refactor Success — **MEDIUM**
+
+No single metric captures refactor value. Smell counts drop while behavior breaks; readability improves while review cost spikes. Use a portfolio of indicators and tie success to future change cost, not immediate style conformance.
+
+- [`measure-portfolio`](./references/measure-portfolio.md) — Judge Refactor Success With a Multi-Dimensional Portfolio of Indicators
+- [`measure-smell-not-safety`](./references/measure-smell-not-safety.md) — Smell Reduction and Static-Analysis Clean Are Not Behavior-Preservation Oracles
 
 ## Full Compiled Document
 
-For expanded guidance with grouped sections, see `AGENTS.md`.
+For the complete guide with every reference expanded inline (bad/good examples, citations, prerequisites), see [`AGENTS.md`](./AGENTS.md). It is the [AGENTS.md-convention](https://agents.md) fallback for tools that do not load individual references on demand.

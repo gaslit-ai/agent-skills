@@ -1,15 +1,15 @@
 ---
-title: Rule Title Here
+title: Reference Title Here
 impact: MEDIUM
 impactDescription: Optional impact detail
 tags: tag1, tag2
 ---
 
-## Rule Title Here
+## Reference Title Here
 
 **Impact: MEDIUM**
 
-Brief (2-4 sentence) explanation of the rule and why it matters, grounded in the evidence. Use highly technical specialized terminology, empirical, and/or technical nomenclature.
+Brief (2-4 sentence) explanation of the reference and why it matters, grounded in the evidence. Use highly technical specialized terminology, empirical, and/or technical nomenclature.
 
 **Incorrect (what fails):**
 

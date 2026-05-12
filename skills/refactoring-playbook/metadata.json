@@ -1,8 +1,14 @@
 {
+  "name": "refactoring-playbook",
+  "description": "Evidence-based refactoring playbook distilled from empirical software engineering research. Use when planning, executing, or reviewing refactoring work — when to refactor, how to refactor safely, how to use automation and LLM assistance, and how to measure success. Triggers on tasks framed as \"refactor\", \"clean up\", \"extract method\", \"rename\", \"migrate\", \"modernize\", or \"reduce tech debt\".",
+  "license": "MIT",
+  "allowedTools": "Bash(scripts/hotspots.sh:*) Bash(hotspot:*) Bash(git:*) Bash(jq:*)",
+  "author": "duke",
   "version": "0.1.0",
   "organization": "Duke Engineering",
   "date": "May 2026",
   "abstract": "Evidence-based playbook for refactoring code bases. Synthesizes foundational refactoring theory (Opdyke, Fowler, Mens & Tourwé), industrial field studies at Microsoft and Google, modern code-review and mining studies, and recent LLM-assisted refactoring evaluations into a small set of high-leverage rules covering triggers, safety, review, automation, and measurement.",
+  "body": "Evidence-based guidance for refactoring code bases. Grounded in primary studies from ACM/IEEE venues, industrial reports, and recent AI-assisted refactoring evaluations.\n\nEach reference below is a separate file in `references/`; the agent loads only the references it needs for the current task. The fully expanded long-form guide (with bad/good code examples inlined) lives in `AGENTS.md` for tools that follow the [AGENTS.md convention](https://agents.md) rather than the [Agent Skills spec](https://agentskills.io/specification).",
   "references": [
     "https://refactoring.com/",
     "https://martinfowler.com/books/refactoring.html",

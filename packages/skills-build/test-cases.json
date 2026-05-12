@@ -1,127 +1,127 @@
 [
   {
-    "ruleId": "bootstrap-install-toolchain",
-    "ruleTitle": "Install Required Analysis Libraries Before Any Init Step",
+    "referenceId": "bootstrap-install-toolchain",
+    "referenceTitle": "Install Required Analysis Libraries Before Any Init Step",
     "type": "bad",
     "code": "npm install --save-dev dependency-cruiser\nnpx depcruise --init oneshot\nnpm run arch",
     "language": "bash",
     "description": "partial setup causes failure"
   },
   {
-    "ruleId": "bootstrap-install-toolchain",
-    "ruleTitle": "Install Required Analysis Libraries Before Any Init Step",
+    "referenceId": "bootstrap-install-toolchain",
+    "referenceTitle": "Install Required Analysis Libraries Before Any Init Step",
     "type": "good",
     "code": "npm install --save-dev dependency-cruiser ts-morph fast-glob\nnpx depcruise --init oneshot\nnpm run arch -- --help",
     "language": "bash",
     "description": "full install first"
   },
   {
-    "ruleId": "callgraph-entrypoint-selection",
-    "ruleTitle": "Seed Callgraph from Real Ingress Entrypoints",
+    "referenceId": "callgraph-entrypoint-selection",
+    "referenceTitle": "Seed Callgraph from Real Ingress Entrypoints",
     "type": "bad",
     "code": "npm run arch -- --callgraph --entry \"src/**/*.ts\"",
     "language": "bash",
     "description": "random seed files"
   },
   {
-    "ruleId": "callgraph-entrypoint-selection",
-    "ruleTitle": "Seed Callgraph from Real Ingress Entrypoints",
+    "referenceId": "callgraph-entrypoint-selection",
+    "referenceTitle": "Seed Callgraph from Real Ingress Entrypoints",
     "type": "good",
     "code": "npm run arch -- --callgraph --entry src/index.ts --entry src/server.ts",
     "language": "bash",
     "description": "explicit ingress seeds"
   },
   {
-    "ruleId": "cli-validate-arguments",
-    "ruleTitle": "Validate CLI Arguments Before Execution",
+    "referenceId": "cli-validate-arguments",
+    "referenceTitle": "Validate CLI Arguments Before Execution",
     "type": "bad",
     "code": "npm run arch -- --config --deps\n# --deps is consumed as config value",
     "language": "bash",
     "description": "silent argument swallowing"
   },
   {
-    "ruleId": "cli-validate-arguments",
-    "ruleTitle": "Validate CLI Arguments Before Execution",
+    "referenceId": "cli-validate-arguments",
+    "referenceTitle": "Validate CLI Arguments Before Execution",
     "type": "good",
     "code": "npm run arch -- --config --deps\n# exits with: Missing value for --config. Expected a path.",
     "language": "bash",
     "description": "explicit validation and failure"
   },
   {
-    "ruleId": "deps-merge-base-config",
-    "ruleTitle": "Merge Mermaid Output Options with Generated depcruise Config",
+    "referenceId": "deps-merge-base-config",
+    "referenceTitle": "Merge Mermaid Output Options with Generated depcruise Config",
     "type": "bad",
     "code": "const config = { outputType: \"mermaid\" }",
     "language": "js",
     "description": "replace baseline resolver"
   },
   {
-    "ruleId": "deps-merge-base-config",
-    "ruleTitle": "Merge Mermaid Output Options with Generated depcruise Config",
+    "referenceId": "deps-merge-base-config",
+    "referenceTitle": "Merge Mermaid Output Options with Generated depcruise Config",
     "type": "good",
     "code": "const config = {\n  ...baseConfig,\n  outputType: \"mermaid\",\n  reporterOptions: {\n    ...(baseConfig.reporterOptions ?? {}),\n    dot: { ...(baseConfig.reporterOptions?.dot ?? {}), collapsePattern: \"node_modules\" }\n  }\n}",
     "language": "js",
     "description": "merge with baseline"
   },
   {
-    "ruleId": "ops-document-gotchas",
-    "ruleTitle": "Keep a Living GOTCHA Log for Recurring Failure Modes",
+    "referenceId": "ops-document-gotchas",
+    "referenceTitle": "Keep a Living GOTCHA Log for Recurring Failure Modes",
     "type": "bad",
     "code": "Team members repeatedly hit zsh globbing, entrypoint explosion, and npm preamble parsing issues.",
     "language": "text",
     "description": "tribal knowledge only"
   },
   {
-    "ruleId": "ops-document-gotchas",
-    "ruleTitle": "Keep a Living GOTCHA Log for Recurring Failure Modes",
+    "referenceId": "ops-document-gotchas",
+    "referenceTitle": "Keep a Living GOTCHA Log for Recurring Failure Modes",
     "type": "good",
     "code": "## GOTCHAs\n- zsh expands unquoted globs; quote file patterns.\n- npm command output includes preamble lines; parse graph sections explicitly.\n- broad callgraph entrypoints can exceed max edge budgets.",
     "language": "markdown",
     "description": "capture gotchas immediately"
   },
   {
-    "ruleId": "scope-tsconfig-arch",
-    "ruleTitle": "Use a Dedicated tsconfig.arch.json for Analysis Scope",
+    "referenceId": "scope-tsconfig-arch",
+    "referenceTitle": "Use a Dedicated tsconfig.arch.json for Analysis Scope",
     "type": "bad",
     "code": "{\n  \"extends\": \"./tsconfig.json\"\n}",
     "language": "json",
     "description": "reusing app tsconfig pulls too much"
   },
   {
-    "ruleId": "scope-tsconfig-arch",
-    "ruleTitle": "Use a Dedicated tsconfig.arch.json for Analysis Scope",
+    "referenceId": "scope-tsconfig-arch",
+    "referenceTitle": "Use a Dedicated tsconfig.arch.json for Analysis Scope",
     "type": "good",
     "code": "{\n  \"extends\": \"./tsconfig.json\",\n  \"include\": [\"src/**/*.ts\", \"src/**/*.tsx\"],\n  \"exclude\": [\"dist\", \"build\", \"coverage\", \"**/*.test.ts\", \"**/*.spec.ts\"]\n}",
     "language": "json",
     "description": "explicit analysis scope"
   },
   {
-    "ruleId": "types-deterministic-ids-and-sort",
-    "ruleTitle": "Keep Type Graph IDs and Ordering Deterministic",
+    "referenceId": "types-deterministic-ids-and-sort",
+    "referenceTitle": "Keep Type Graph IDs and Ordering Deterministic",
     "type": "bad",
     "code": "for (const declaration of declarations) {\n  nodes.push({ id: Math.random().toString(), label: declaration.getName() })\n}",
     "language": "ts",
     "description": "iteration-order dependent IDs"
   },
   {
-    "ruleId": "types-deterministic-ids-and-sort",
-    "ruleTitle": "Keep Type Graph IDs and Ordering Deterministic",
+    "referenceId": "types-deterministic-ids-and-sort",
+    "referenceTitle": "Keep Type Graph IDs and Ordering Deterministic",
     "type": "good",
     "code": "for (const declaration of declarations\n  .slice()\n  .sort((a, b) => a.getSourceFile().getFilePath().localeCompare(b.getSourceFile().getFilePath(), \"en-US\"))) {\n  const id = declaration.getSourceFile().getFilePath() + \"::\" + declaration.getName()\n  nodes.push({ id, label: declaration.getName() ?? \"anonymous\" })\n}",
     "language": "ts",
     "description": "stable sort and deterministic IDs"
   },
   {
-    "ruleId": "verify-repeatability",
-    "ruleTitle": "Prove Repeatability with Diff-Based Re-Runs",
+    "referenceId": "verify-repeatability",
+    "referenceTitle": "Prove Repeatability with Diff-Based Re-Runs",
     "type": "bad",
     "code": "npm run arch -- --deps",
     "language": "bash",
     "description": "single-run confidence only"
   },
   {
-    "ruleId": "verify-repeatability",
-    "ruleTitle": "Prove Repeatability with Diff-Based Re-Runs",
+    "referenceId": "verify-repeatability",
+    "referenceTitle": "Prove Repeatability with Diff-Based Re-Runs",
     "type": "good",
     "code": "npm run arch -- --deps --minify false > /tmp/deps-1.mmd\nnpm run arch -- --deps --minify false > /tmp/deps-2.mmd\ndiff /tmp/deps-1.mmd /tmp/deps-2.mmd",
     "language": "bash",
