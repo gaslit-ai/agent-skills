@@ -56,29 +56,20 @@ Relative-churn is among the most reliably-validated process metrics for prioriti
 **Incorrect: refactoring a low-churn legacy helper — defect risk and ROI are both negligible**
 
 ```bash
-# legacy/format-1999.ts: 1 commit in 24 months
-git log --since="24 months ago" --pretty=oneline -- legacy/format-1999.ts
-# a1b2c3d  fix typo in comment
+# JSON to stdout, status to stderr — pipeable into jq, dashboards, CI.
+scripts/hotspots.sh . --limit 10 --mode roi --since 90d \
+  | jq -r '.results[] | "\(.rank)\t\(.score | round)\t\(.churn)\t\(.lines_of_code)\t\(.path)"'
+# 1   824   18   240   api/orders.ts          <-- top-decile refactor target
+# 2   612   12   180   api/payments.ts
+# 3   504    9   140   web/checkout.tsx
+# 4    24    2    12   legacy/format-1999.ts
 
-# yet the file gets a 400-line "modernization" PR
+# Refactor priority list = top-decile rows; refactor in score-descending order.
+# Prerequisite: `go install github.com/huangsam/hotspot@latest` (script
+# exits with install instructions if `hotspot` is not on PATH).
 ```
 
-**Correct: relative-churn ranking surfaces hotspots; refactor the top-decile target**
-
-```bash
-# rank by edit frequency over a 90-day window (relative churn proxy)
-git log --since="90 days ago" --pretty=format: --name-only \
-  | grep -v '^$' | sort | uniq -c | sort -rn | head
-#   18 api/orders.ts        <-- top-decile hotspot
-#   12 api/payments.ts
-#    9 web/checkout.tsx
-#    2 legacy/format-1999.ts
-
-# augment with lines-touched (severity of churn) before committing scope
-git log --since="90 days ago" --numstat -- api/orders.ts \
-  | awk 'NF==3 {add+=$1; del+=$2} END {print "+"add, "-"del}'
-# +812 -640    <-- high relative churn, well above repo median
-```
+**Correct (invoke the bundled `scripts/hotspots.sh`; thin wrapper around [`hotspot`](https://github.com/huangsam/hotspot) implementing Tornhill ROI scoring with the empirical 90-day window):**
 
 Reference: [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/icse05churn.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/icse05churn.pdf), [https://arxiv.org/pdf/2101.01430](https://arxiv.org/pdf/2101.01430), [https://pragprog.com/titles/atcrime2/your-code-as-a-crime-scene-second-edition/](https://pragprog.com/titles/atcrime2/your-code-as-a-crime-scene-second-edition/)
 

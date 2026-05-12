@@ -2,6 +2,7 @@
 name: refactoring-playbook
 description: Evidence-based refactoring playbook distilled from empirical software engineering research. Use when planning, executing, or reviewing refactoring work — when to refactor, how to refactor safely, how to use automation and LLM assistance, and how to measure success. Triggers on tasks framed as "refactor", "clean up", "extract method", "rename", "migrate", "modernize", or "reduce tech debt".
 license: MIT
+allowed-tools: Bash(scripts/hotspots.sh:*) Bash(hotspot:*) Bash(git:*) Bash(jq:*)
 metadata:
   author: duke
   version: "0.1.0"
