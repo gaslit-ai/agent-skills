@@ -2,9 +2,9 @@
 
 import { readdir, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { DEFAULT_SKILL, SKILLS, TEST_CASES_FILE } from './config.js'
+import { DEFAULT_SKILL, SKILLS, resolveTestCasesFile } from './config.js'
 import { parseRuleFile } from './parser.js'
-import { TestCase } from './types.js'
+import { SkillConfig, TestCase } from './types.js'
 
 function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): TestCase[] {
   const tests: TestCase[] = []
@@ -30,8 +30,7 @@ function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): T
   return tests
 }
 
-async function main(): Promise<void> {
-  const skill = SKILLS[DEFAULT_SKILL]
+async function extractForSkill(skill: SkillConfig): Promise<void> {
   const files = await readdir(skill.rulesDir)
   const ruleFiles = files.filter((file) => file.endsWith('.md') && !file.startsWith('_') && file !== 'README.md')
 
@@ -43,8 +42,31 @@ async function main(): Promise<void> {
     allTests.push(...tests)
   }
 
-  await writeFile(TEST_CASES_FILE, JSON.stringify(allTests, null, 2) + '\n', 'utf-8')
-  console.log(`✓ Extracted ${allTests.length} test cases to ${TEST_CASES_FILE}`)
+  const outputFile = resolveTestCasesFile(skill.name)
+  await writeFile(outputFile, JSON.stringify(allTests, null, 2) + '\n', 'utf-8')
+  console.log(`✓ Extracted ${allTests.length} test cases to ${outputFile}`)
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2)
+  const buildAll = args.includes('--all')
+  const skillArg = args.find((arg) => arg.startsWith('--skill='))
+  const skillName = skillArg ? skillArg.split('=')[1] : null
+
+  if (skillName && !SKILLS[skillName]) {
+    console.error(`Unknown skill: ${skillName}`)
+    process.exit(1)
+  }
+
+  const targets: SkillConfig[] = buildAll
+    ? Object.values(SKILLS)
+    : skillName
+      ? [SKILLS[skillName]]
+      : [SKILLS[DEFAULT_SKILL]]
+
+  for (const skill of targets) {
+    await extractForSkill(skill)
+  }
 }
 
 main().catch((error) => {

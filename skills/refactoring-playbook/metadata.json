@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "organization": "Duke Engineering",
+  "date": "May 2026",
+  "abstract": "Evidence-based playbook for refactoring code bases. Synthesizes foundational refactoring theory (Opdyke, Fowler, Mens & Tourwé), industrial field studies at Microsoft and Google, modern code-review and mining studies, and recent LLM-assisted refactoring evaluations into a small set of high-leverage rules covering triggers, safety, review, automation, and measurement.",
+  "references": [
+    "https://refactoring.com/",
+    "https://martinfowler.com/books/refactoring.html",
+    "https://www.computer.org/csdl/journal/ts/2004/02/e0126/13rRUwInvyM",
+    "https://www.microsoft.com/en-us/research/publication/an-empirical-study-of-refactoring-challenges-and-benefits-at-microsoft/",
+    "https://refactoringminer.org/",
+    "https://docs.openrewrite.org/",
+    "https://github.com/google/error-prone",
+    "https://coccinelle.gitlabpages.inria.fr/website/",
+    "https://arxiv.org/abs/2411.02320"
+  ]
+}

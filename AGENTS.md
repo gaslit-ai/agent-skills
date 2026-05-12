@@ -21,7 +21,7 @@ skills/
 
 ```text
 packages/
-  duke-dependency-generator-build/
+  skills-build/
     package.json
     tsconfig.json
     src/
@@ -33,11 +33,13 @@ packages/
       types.ts
 ```
 
+A single build package compiles every skill in this repo. Skills are registered in `src/config.ts` via the `SKILLS` record.
+
 ## CI Contract
 
-- CI triggers only when the skill or its build package changes.
-- CI runs from the build package working directory.
-- Required checks: `pnpm validate` and `pnpm build`.
+- CI triggers only when a skill or the shared build package changes.
+- CI runs from `packages/skills-build` as the working directory.
+- Required checks per skill: `pnpm validate:<skill>` and `pnpm build:<skill>`.
 
 ## Authoring Rules
 

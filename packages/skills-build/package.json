@@ -1,0 +1,26 @@
+{
+  "name": "skills-build",
+  "version": "0.1.0",
+  "description": "Build, validate, and test-extraction tooling for all skills in this repository",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm build-agents && pnpm extract-tests",
+    "build-agents": "tsx src/build.ts",
+    "build-skill": "tsx src/build.ts --skill=duke-dependency-generator",
+    "build:all": "tsx src/build.ts --all && tsx src/extract-tests.ts --all",
+    "build:refactoring-playbook": "tsx src/build.ts --skill=refactoring-playbook && tsx src/extract-tests.ts --skill=refactoring-playbook",
+    "build:shared-ontologies": "tsx src/build.ts --skill=shared-ontologies && tsx src/extract-tests.ts --skill=shared-ontologies",
+    "validate": "tsx src/validate.ts",
+    "validate:all": "tsx src/validate.ts --all",
+    "validate:refactoring-playbook": "tsx src/validate.ts --skill=refactoring-playbook",
+    "validate:shared-ontologies": "tsx src/validate.ts --skill=shared-ontologies",
+    "extract-tests": "tsx src/extract-tests.ts",
+    "dev": "pnpm build && pnpm validate"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

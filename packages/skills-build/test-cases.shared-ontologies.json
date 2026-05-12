@@ -1,0 +1,162 @@
+[
+  {
+    "ruleId": "architecture-modular-boundaries",
+    "ruleTitle": "Modularize the Ontology Around Stable Interface Boundaries",
+    "type": "bad",
+    "code": "import { EnterpriseOntology } from \"@acme/ontology/all\";\n\nconst term = EnterpriseOntology.anything.CustomerLifecycleState;",
+    "language": "ts",
+    "description": "every service imports the whole enterprise ontology — every change to any unrelated term ripples through every consumer"
+  },
+  {
+    "ruleId": "architecture-modular-boundaries",
+    "ruleTitle": "Modularize the Ontology Around Stable Interface Boundaries",
+    "type": "good",
+    "code": "import { CustomerCore } from \"@acme/ontology/customer-core/v2\";\nimport { AccountRelations } from \"@acme/ontology/account-relations/v1\";\n\nexport const requiredOntologyModules = [\n  CustomerCore.moduleIri,\n  AccountRelations.moduleIri\n] as const;",
+    "language": "ts",
+    "description": "service imports only the stable, versioned modules it depends on — change containment is structural, not aspirational"
+  },
+  {
+    "ruleId": "architecture-reuse-reference",
+    "ruleTitle": "Reuse Reference Ontologies Before Inventing Local Synonyms",
+    "type": "bad",
+    "code": "export const CellPart = {\n  iri: \"https://acme.example/ontology#CellPart\",\n  definition: \"Something inside a biological cell.\"\n};",
+    "language": "ts",
+    "description": "local synonym invented without checking reusable reference vocabularies"
+  },
+  {
+    "ruleId": "architecture-reuse-reference",
+    "ruleTitle": "Reuse Reference Ontologies Before Inventing Local Synonyms",
+    "type": "good",
+    "code": "export const referencedTerms = {\n  cellularComponent: {\n    iri: \"http://purl.obolibrary.org/obo/GO_0005575\",\n    source: \"Gene Ontology\",\n    localAlias: \"CellularComponent\"\n  }\n} as const;\n\nexport const assayOntology = {\n  imports: [referencedTerms.cellularComponent.iri],\n  localTerms: [\"AcmeAssayRun\", \"AcmeSamplePreparation\"]\n} as const;",
+    "language": "ts",
+    "description": "Gene Ontology term referenced via MIREOT-style import, with explicit local alias preserved for tooling"
+  },
+  {
+    "ruleId": "architecture-weakest-formalism",
+    "ruleTitle": "Use the Weakest Formalism That Satisfies the Required Inference",
+    "type": "bad",
+    "code": "function isBillableCustomer(x: any): boolean {\n  return x.kind === \"person\" && x.status !== \"deleted\" && !!x.paymentMethod;\n}",
+    "language": "ts",
+    "description": "business logic, constraints, and inference ad-hoc in code — no formal semantics, no validation gate, no reasoner check"
+  },
+  {
+    "ruleId": "architecture-weakest-formalism",
+    "ruleTitle": "Use the Weakest Formalism That Satisfies the Required Inference",
+    "type": "good",
+    "code": "export const ontologyProfile = {\n  vocabulary: \"OWL2-EL\",\n  reasonerChecks: [\"subclassConsistency\", \"propertyDomainRange\"],\n  closedWorldValidation: \"SHACL\",\n  codePolicy: \"Application code may consume inferred classes but must not redefine them.\"\n} as const;",
+    "language": "ts",
+    "description": "explicit OWL 2 profile chosen for the required inference, closed-world validation delegated to SHACL, code role bounded"
+  },
+  {
+    "ruleId": "evolution-mappings-first-class",
+    "ruleTitle": "Make Cross-Ontology Mappings First-Class Artifacts",
+    "type": "bad",
+    "code": "function normalizeOrder(row: any) {\n  return {\n    customerId: row.client_id ?? row.party_ref ?? row.account_holder\n  };\n}",
+    "language": "ts",
+    "description": "hidden semantic mapping embedded in service code — no review, no version, no confidence, no test"
+  },
+  {
+    "ruleId": "evolution-mappings-first-class",
+    "ruleTitle": "Make Cross-Ontology Mappings First-Class Artifacts",
+    "type": "good",
+    "code": "export const sourceToOntologyMappings = [\n  {\n    source: \"billing.client_id\",\n    target: \"https://acme.example/ontology/customer#LegalCustomer\",\n    relation: \"identifies\",\n    confidence: 0.98,\n    tests: [\"billing-client-id-resolves-to-one-legal-customer\"]\n  }\n] as const;",
+    "language": "ts",
+    "description": "mapping is an explicit, versioned, confidence-annotated, testable artefact with declared source and target"
+  },
+  {
+    "ruleId": "evolution-versioned-migrations",
+    "ruleTitle": "Version Ontology Changes as Contract Migrations",
+    "type": "bad",
+    "code": "export const Customer = {\n  iri: \"https://acme.example/ontology#Customer\",\n  definition: \"A person who logs into the application.\"\n};",
+    "language": "ts",
+    "description": "silent semantic mutation — same IRI, redefined meaning, no migration, no deprecation, no provenance"
+  },
+  {
+    "ruleId": "evolution-versioned-migrations",
+    "ruleTitle": "Version Ontology Changes as Contract Migrations",
+    "type": "good",
+    "code": "export const Customer_v2 = {\n  iri: \"https://acme.example/ontology/v2#Customer\",\n  definition: \"A legal party with an accountable commercial relationship.\",\n  replaces: \"https://acme.example/ontology/v1#Customer\",\n  migration: \"map v1 Customer where kind=person to v2 NaturalPersonCustomer\",\n  deprecatedTerms: [\"https://acme.example/ontology/v1#Customer\"]\n};",
+    "language": "ts",
+    "description": "new version IRI, prior version explicitly deprecated, migration rule documented, provenance preserved"
+  },
+  {
+    "ruleId": "governance-editorial-workflow",
+    "ruleTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
+    "type": "bad",
+    "code": "await ontologyRepo.merge({\n  author: \"backend-dev\",\n  change: \"rename Party to Customer because it sounds clearer\",\n  reviewers: []\n});",
+    "language": "ts",
+    "description": "developer-local semantic authority — no domain expert, no review, no decision record"
+  },
+  {
+    "ruleId": "governance-editorial-workflow",
+    "ruleTitle": "Govern Shared Ontologies With Collaborative Editorial Workflow",
+    "type": "good",
+    "code": "await ontologyRepo.proposeChange({\n  changeId: \"ONT-742\",\n  affectedTerms: [\"Party\", \"Customer\"],\n  competencyQuestions: [\"CQ-001\", \"CQ-017\"],\n  reviewers: [\"domain-owner\", \"data-architect\", \"service-owner\"],\n  decisionRecord: \"ADR-ontology-742-party-customer-boundary\"\n});",
+    "language": "ts",
+    "description": "proposal references the affected terms and CQs, names the required reviewers, and produces a decision record"
+  },
+  {
+    "ruleId": "governance-operational-measurement",
+    "ruleTitle": "Measure Ontology Value by Operational Use, Not Aesthetic Completeness",
+    "type": "bad",
+    "code": "const ontologyScore = ontology.terms.length;",
+    "language": "ts",
+    "description": "vanity metric — counts terms, not whether anyone can use them"
+  },
+  {
+    "ruleId": "governance-operational-measurement",
+    "ruleTitle": "Measure Ontology Value by Operational Use, Not Aesthetic Completeness",
+    "type": "good",
+    "code": "const ontologyScore = {\n  competencyQuestionsPassing: 42 / 44,\n  productionEventsAnnotated: 0.91,\n  mappingsReusedAcrossServices: 18,\n  shaclValidationPassRate: 0.987,\n  adapterBranchesRemoved: 37\n};",
+    "language": "ts",
+    "description": "portfolio of operational outcomes the ontology is supposed to enable, each tied to a downstream consumer"
+  },
+  {
+    "ruleId": "requirements-competency-questions",
+    "ruleTitle": "Start Shared Ontologies From Competency Questions, Not Term Lists",
+    "type": "bad",
+    "code": "export const ontologyTerms = [\n  \"Customer\",\n  \"Account\",\n  \"Identity\",\n  \"Entitlement\",\n  \"Segment\"\n] as const;",
+    "language": "ts",
+    "description": "a vocabulary dump — no user, no task, no query, no verification target"
+  },
+  {
+    "ruleId": "requirements-competency-questions",
+    "ruleTitle": "Start Shared Ontologies From Competency Questions, Not Term Lists",
+    "type": "good",
+    "code": "export const competencyQuestions = [\n  {\n    id: \"CQ-001\",\n    asks: \"Which legal party owns this account at a given effective time?\",\n    requiredTerms: [\"LegalParty\", \"Account\", \"owns\", \"effectiveTime\"],\n    expectedQuery: \"account.owner.where(effectiveTime <= t)\"\n  }\n] as const;\n\nexport const ontologyScope = {\n  domain: \"customer-account ownership\",\n  excluded: [\"marketing segmentation\", \"credit underwriting\"],\n  intendedUsers: [\"billing-service\", \"identity-service\", \"compliance-reporting\"]\n} as const;",
+    "language": "ts",
+    "description": "competency questions, scope, and intended consumers fix the verification target up front"
+  },
+  {
+    "ruleId": "requirements-semantic-contract",
+    "ruleTitle": "Treat the Shared Ontology as a Semantic Contract, Not a Naming Convention",
+    "type": "bad",
+    "code": "type BillingCustomer = { id: string; customerType: \"customer\" };\ntype SupportCustomer = { id: string; customerType: \"customer\" };\n// no shared definition: payer? user? legal party? contact?",
+    "language": "ts",
+    "description": "same label, different semantics across services — no commitment, no contract"
+  },
+  {
+    "ruleId": "requirements-semantic-contract",
+    "ruleTitle": "Treat the Shared Ontology as a Semantic Contract, Not a Naming Convention",
+    "type": "good",
+    "code": "type OntologyTerm = {\n  iri: string;\n  label: string;\n  definition: string;\n  broader?: string;\n};\n\nexport const LegalCustomer: OntologyTerm = {\n  iri: \"https://acme.example/ontology/customer#LegalCustomer\",\n  label: \"Legal customer\",\n  definition:\n    \"A legal party that has entered into an accountable commercial relationship with Acme.\",\n  broader: \"https://acme.example/ontology/party#LegalParty\"\n};",
+    "language": "ts",
+    "description": "each term carries IRI, label, definition, and a broader-than relation — a commitment downstream consumers can reason about"
+  },
+  {
+    "ruleId": "validation-tests-reasoners-shapes",
+    "ruleTitle": "Validate Ontologies With Tests, Reasoners, Shapes, and Pitfall Scanners",
+    "type": "bad",
+    "code": "export const release = {\n  version: \"3.4.0\",\n  terms: loadTerms(),\n  tests: []\n};",
+    "language": "ts",
+    "description": "ontology package ships without semantic or data-conformance tests — no reasoner, no shapes, no pitfall scan"
+  },
+  {
+    "ruleId": "validation-tests-reasoners-shapes",
+    "ruleTitle": "Validate Ontologies With Tests, Reasoners, Shapes, and Pitfall Scanners",
+    "type": "good",
+    "code": "export const ontologyReleaseChecks = [\n  \"reasoner:consistent-classes\",\n  \"reasoner:no-unsatisfiable-classes\",\n  \"cq:all-competency-questions-answerable\",\n  \"shacl:all-production-sample-data-valid\",\n  \"pitfalls:oops-critical-zero\"\n] as const;",
+    "language": "ts",
+    "description": "release gate enumerates the reasoner, CQ, SHACL, and pitfall-scanner checks that must pass before publish"
+  }
+]

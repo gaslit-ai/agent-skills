@@ -18,6 +18,13 @@ function incrementVersion(version: string): string {
   return parts.join('.')
 }
 
+function slug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]/g, '')
+}
+
 function generateMarkdown(
   sections: Section[],
   metadata: {
@@ -43,16 +50,12 @@ function generateMarkdown(
   md += `## Table of Contents\n\n`
 
   for (const section of sections) {
-    md += `${section.number}. [${section.title}](#${section.number}-${section.title
-      .toLowerCase()
-      .replace(/\s+/g, '-')}) — **${section.impact}**\n`
+    const sectionAnchor = slug(`${section.number}. ${section.title}`)
+    md += `${section.number}. [${section.title}](#${sectionAnchor}) — **${section.impact}**\n`
 
     for (const rule of section.rules) {
-      const anchor = `${rule.id} ${rule.title}`
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w-]/g, '')
-      md += `   - ${rule.id} [${rule.title}](#${anchor})\n`
+      const ruleAnchor = slug(`${rule.id} ${rule.title}`)
+      md += `   - ${rule.id} [${rule.title}](#${ruleAnchor})\n`
     }
   }
 

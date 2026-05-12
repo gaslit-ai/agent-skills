@@ -1,0 +1,234 @@
+[
+  {
+    "ruleId": "automation-keep-oversight",
+    "ruleTitle": "LLM Migration Tools Accelerate Mechanics; Per-Patch Oversight Stays In-Loop",
+    "type": "bad",
+    "code": "# 240 LLM-generated patches applied in one transaction\ngit apply patches/*.diff\ngit add -A && git commit -m \"migrate to v2 SDK\"\ngit push\n\n# CI fails 3 hours later on 14 files\n# rolling back a 240-file commit invalidates all downstream branches\n# bisect lands on a tangled diff that hides which intent failed",
+    "language": "bash",
+    "description": "bulk-apply 240 LLM patches, single commit, CI is the only oracle"
+  },
+  {
+    "ruleId": "automation-keep-oversight",
+    "ruleTitle": "LLM Migration Tools Accelerate Mechanics; Per-Patch Oversight Stays In-Loop",
+    "type": "good",
+    "code": "# replicate the Google migration pattern: bounded scope, gated patches, human-in-loop\nfor patch in patches/*.diff; do\n  git apply \"$patch\"\n\n  # patch-scoped test gate (only the modules the patch touched)\n  scope=\"$(scripts/scope-for-patch.sh \"$patch\")\"\n  pnpm test --filter \"$scope\" && pnpm tsc --noEmit -p tsconfig.$scope.json || {\n    echo \"rejected: $patch (failed scoped gate)\"\n    git checkout -- .\n    continue\n  }\n\n  git add -A\n  git commit -m \"migrate($scope): apply $(basename \"$patch\" .diff) (LLM-drafted, gate-verified)\"\ndone\n\n# every commit is independently green, independently reviewable, independently revertable\ngh pr create --title \"migrate to v2 SDK (LLM-assisted, $(git rev-list --count HEAD ^main) gated commits)\"",
+    "language": "bash",
+    "description": "per-patch test gate + per-patch commit + per-patch reviewable diff"
+  },
+  {
+    "ruleId": "automation-llm-local",
+    "ruleTitle": "LLM-Assisted Refactoring Is Strongest on Local, Mechanically Scoped Transformations",
+    "type": "bad",
+    "code": "Prompt:\n  \"Refactor the cart module to follow hexagonal architecture.\"\n\nOutput:\n  - 17 new files\n  - invented ports/adapters with unresolved imports\n  - existing tests untouched\n  - no preconditions verified\n\nResult: 76%+ of suggestions hallucinated (cf. EM-Assist 2024); manual\n        recovery cost exceeds the value of the change.",
+    "language": "text",
+    "description": "cross-file architectural rewrite from a thin prompt — high hallucination rate, no oracle"
+  },
+  {
+    "ruleId": "automation-llm-local",
+    "ruleTitle": "LLM-Assisted Refactoring Is Strongest on Local, Mechanically Scoped Transformations",
+    "type": "good",
+    "code": "Prompt (one-shot, scope-narrowed per Liu et al. 2024):\n  \"In `priceFor` below, extract the line-item summation into a pure helper\n   `sumLineItems(items: Item[]): Money`. Preserve observable behavior.\n   Do not change the public signature of `priceFor`. Return only the new\n   function bodies.\"\n\nVerification gate:\n  pnpm tsc --noEmit                 # type system rejects symbol-resolution errors\n  pnpm test src/pricing             # existing tests prove observational equivalence\n  refactoring-detector --against=HEAD~1 \\\n    --expect \"Extract Method: sumLineItems\"   # detector confirms intent\n\nOutcome: one independently verifiable atomic refactoring, revertable in one commit.",
+    "language": "text",
+    "description": "local, type-checked, single-method Extract Method with explicit pre/postconditions"
+  },
+  {
+    "ruleId": "automation-semantic-tools",
+    "ruleTitle": "Prefer Semantic-Aware Codemods Over Regex Search-and-Replace",
+    "type": "bad",
+    "code": "# rename `Cart` -> `ShoppingCart` repository-wide via regex\ngit ls-files '*.ts' | xargs sed -i '' 's/Cart/ShoppingCart/g'\n\n# collateral damage:\ngit diff --stat | head\n#   src/checkout/util.ts        # \"AbandonedCart\" log message rewritten\n#   src/math/cartesian.ts       # CartesianProduct -> ShoppingCartesianProduct\n#   tests/fixtures/orders.json  # string data \"Cart-001\" rewritten\n#   docs/architecture.md        # comments rewritten",
+    "language": "bash",
+    "description": "textual `sed` rename rewrites comments, string literals, and partial-match identifiers"
+  },
+  {
+    "ruleId": "automation-semantic-tools",
+    "ruleTitle": "Prefer Semantic-Aware Codemods Over Regex Search-and-Replace",
+    "type": "good",
+    "code": "# scripts/rename-cart.ts (jscodeshift transform)\n# - resolves the Cart class symbol via the language service\n# - rewrites only declaration sites, type references, and import/export bindings\n# - leaves strings, comments, and unrelated identifiers (CartesianProduct) untouched\nnpx jscodeshift -t scripts/rename-cart.ts --extensions=ts,tsx --parser=tsx src/\n\n# verify semantic scope of the change\ngit diff --stat | head\n#   src/cart/ShoppingCart.ts        (renamed from src/cart/Cart.ts)\n#   src/cart/index.ts               (re-export updated)\n#   src/checkout/CheckoutFlow.ts    (import + 3 type references updated)\ngit grep -nF 'CartesianProduct' src/math/   # untouched, as required",
+    "language": "bash",
+    "description": "AST-aware codemod with symbol scoping; only the Cart class binding is touched"
+  },
+  {
+    "ruleId": "measure-portfolio",
+    "ruleTitle": "Judge Refactor Success With a Multi-Dimensional Portfolio of Indicators",
+    "type": "bad",
+    "code": "Refactor retro:\n  smell count: 142 -> 78 (-45%)  ✓\n  → ship it",
+    "language": "text",
+    "description": "single-metric declaration of success — vulnerable to misalignment with perceived outcome"
+  },
+  {
+    "ruleId": "measure-portfolio",
+    "ruleTitle": "Judge Refactor Success With a Multi-Dimensional Portfolio of Indicators",
+    "type": "good",
+    "code": "Refactor retro: api/orders.ts hotspot extraction\n\n  axis                      indicator                                  threshold   measured   verdict\n  ----                      ---------                                  ---------   --------   -------\n  behavior preservation     suite pass rate post-refactor              100%        100%       ✓\n                            production incidents in window (14 d)      0           0          ✓\n  reviewability             merge latency (PR open -> merged)          ≤ 1 day     6 h        ✓\n                            rework loops (force-push count)            ≤ 1         0          ✓\n  comprehension (SPACE-S)   new-reader walkthrough rating (n=3)        ≥ 4/5       4.3/5      ✓\n  hotspot impact            churn rank over rolling 30 d               drop ≥ 3    #1 -> #6   ✓\n  future change cost        next feature files-touched (vs baseline)   ≤ 50%       1 / 6      ✓\n\n  → success criteria met across all axes; refactor accepted.",
+    "language": "text",
+    "description": "multi-dimensional portfolio with disjoint indicators, pre-committed thresholds"
+  },
+  {
+    "ruleId": "measure-smell-not-safety",
+    "ruleTitle": "Smell Reduction and Static-Analysis Clean Are Not Behavior-Preservation Oracles",
+    "type": "bad",
+    "code": "pnpm lint --max-warnings 0 && pnpm tsc --noEmit\n# 0 lint warnings; 0 type errors\ngit push\n# but the refactor changed an enum boundary that no static check enforces;\n# the regression ships silently and surfaces in a customer report",
+    "language": "bash",
+    "description": "static analysis green → ship, no executed-test oracle"
+  },
+  {
+    "ruleId": "measure-smell-not-safety",
+    "ruleTitle": "Smell Reduction and Static-Analysis Clean Are Not Behavior-Preservation Oracles",
+    "type": "good",
+    "code": "# (a) priority signal — smells used only to pick the refactor target\npnpm lint --format json | jq '[.[]|select(.filePath|test(\"src/pricing\"))]|length'\n# 14   → pricing module is a candidate for refactoring\n\n# (b) safety gate — independent of smell metrics\npnpm test --coverage src/pricing && \\\n  pnpm tsc --noEmit && \\\n  pnpm lint --max-warnings 0 && \\\n  refactoring-detector --against=HEAD~1 --expect \"Extract Method\"\n# 148 passed; 0 type errors; 0 warnings; refactor intent verified\n\n# (c) for high-risk scope: differential check against known-good\nscripts/golden-diff.sh src/pricing > /tmp/post.json\ndiff /tmp/baseline.json /tmp/post.json    # empty → observationally equivalent",
+    "language": "bash",
+    "description": "smells as priority signal; tests + type-check + differential check as safety gate"
+  },
+  {
+    "ruleId": "review-intent-commits",
+    "ruleTitle": "Commit Messages Encode Refactor Intent, Not Just \"Cleanup",
+    "type": "bad",
+    "code": "git log --oneline -3 -- src/cart/\na1b2c3d  refactor(cart): extract CartValidator to localize rounding logic\nb2c3d4e  refactor(cart): rename Cart -> ShoppingCart for domain-model consistency\nc3d4e5f  refactor(cart): inline single-use CartFactory into ShoppingCart.from\n\ngit log -1 --format=fuller a1b2c3d\n# subject:  refactor(cart): extract CartValidator to localize rounding logic\n# body:\n#   Extracts cart-validation predicates from ShoppingCart.submit into\n#   CartValidator so future rounding regressions land in a single file.\n#   No behavior change; covered by existing tests/cart/validator.test.ts.\n# footer: Refs: #482",
+    "language": "text",
+    "description": "generic subjects — refactor type, scope, and motivation are unrecoverable"
+  },
+  {
+    "ruleId": "review-small-prs",
+    "ruleTitle": "Keep Refactor PRs Small and Short-Lived",
+    "type": "bad",
+    "code": "PR #482  \"refactor: cart cleanup\"\n  diff:       +2138 / -1907 across 47 files\n  branch age: 14 days\n  reviews:    23 comments, 4 merge-conflict resolutions, 1 reviewer disengaged\n  outcome:    merged after rebase + force-push; review fatigue evident in final approvals",
+    "language": "text",
+    "description": "one PR conflates five intents, long-lived branch, reviewer attrition"
+  },
+  {
+    "ruleId": "review-small-prs",
+    "ruleTitle": "Keep Refactor PRs Small and Short-Lived",
+    "type": "good",
+    "code": "PR #482  refactor: extract CartValidator              +180 / -120,  6 files, merged day 1\nPR #483  refactor: rename Cart -> ShoppingCart        +402 / -402, 31 files, merged day 1\nPR #484  refactor: collapse three pricing functions   +95  / -210,  4 files, merged day 2\nPR #485  refactor: inline unused CartFactory          +0   / -85,   2 files, merged day 2",
+    "language": "text",
+    "description": "intent-disjoint PR sequence, each independently mergeable in a working day"
+  },
+  {
+    "ruleId": "safety-separate-mechanical",
+    "ruleTitle": "Separate Mechanical Edits From Behavior-Changing Edits at the Commit Boundary",
+    "type": "bad",
+    "code": "git log -1 --stat HEAD\n# commit a1b2c3d\n# Author: dev\n#\n#     fix off-by-one in pagination + rename Cart -> ShoppingCart\n#\n#  30 files changed, 412 insertions(+), 408 deletions(-)\n\ngit bisect bad a1b2c3d\n# the regression is in 1 of 30 files; the diff hides which",
+    "language": "bash",
+    "description": "one commit conflates a behavior fix with a 30-file rename — bisect lands on a tangled diff"
+  },
+  {
+    "ruleId": "safety-separate-mechanical",
+    "ruleTitle": "Separate Mechanical Edits From Behavior-Changing Edits at the Commit Boundary",
+    "type": "good",
+    "code": "git log --oneline -2\n# b2c3d4e  fix: off-by-one in pagination (api/orders.ts:142)\n# a1b2c3d  refactor: rename Cart -> ShoppingCart (codemod-applied, no logic change)\n\ngit bisect start b2c3d4e a1b2c3d\n# a1b2c3d is mechanical-only; bisect attributes the regression to b2c3d4e\ngit bisect bad\n# Bisecting: 0 revisions left to test after this\n# the failing intent is identified, not just a 30-file haystack",
+    "language": "bash",
+    "description": "mechanical rename and behavior fix in disjoint commits — bisect identifies the right intent"
+  },
+  {
+    "ruleId": "safety-small-steps",
+    "ruleTitle": "Many Small Behavior-Preserving Transformations Beat One Large Redesign",
+    "type": "bad",
+    "code": "git diff --stat origin/main..refactor/cart-overhaul\n src/cart/CartService.ts      | 412 ++++++++++++++++-----------\n src/cart/ICart.ts            |  84 +++---\n src/cart/index.ts            |  12 +-\n ...\n 12 files changed, 612 insertions(+), 318 deletions(-)\n branch age: 11 days, 4 force-pushes, 2 merge conflicts resolved",
+    "language": "text",
+    "description": "one PR conflates rename + base-class change + method reorder; long-lived branch, painful merge"
+  },
+  {
+    "ruleId": "safety-small-steps",
+    "ruleTitle": "Many Small Behavior-Preserving Transformations Beat One Large Redesign",
+    "type": "good",
+    "code": "# step 1: pure rename, codemod-applied — no semantic change\ngit checkout -b refactor/rename-cart-service && \\\n  pnpm codemod rename-symbol --from Cart --to ShoppingCart && \\\n  pnpm test && git commit -am \"refactor: rename Cart -> ShoppingCart\" && \\\n  gh pr create --title \"refactor: rename Cart -> ShoppingCart\" && \\\n  gh pr merge --squash\n\n# step 2: change base class — preconditions checked, characterization tests in place\ngit checkout -b refactor/cart-extends-domain-entity && \\\n  pnpm test && git commit -am \"refactor: ShoppingCart extends DomainEntity\" && \\\n  gh pr merge --squash\n\n# step 3: method reorder to match interface declaration order — mechanical\ngit checkout -b refactor/order-cart-methods && \\\n  pnpm test && git commit -am \"refactor: reorder methods to match interface\" && \\\n  gh pr merge --squash",
+    "language": "bash",
+    "description": "three short-lived branches, each behavior-preserving, each independently green"
+  },
+  {
+    "ruleId": "safety-tests-first",
+    "ruleTitle": "Strengthen the Regression Net Before Risky Structural Change",
+    "type": "bad",
+    "code": "git checkout -b refactor/extract-pricing\n# 600 LOC moved across 8 files, no new tests\npnpm test\n# 142 passed, 0 failed   ← suite never executed the rounding branch\ngit push   # silent regression ships",
+    "language": "bash",
+    "description": "refactor lands first, suite never characterized the affected path — false-green is indistinguishable from coverage"
+  },
+  {
+    "ruleId": "safety-tests-first",
+    "ruleTitle": "Strengthen the Regression Net Before Risky Structural Change",
+    "type": "good",
+    "code": "# step 1: pin current behavior — quirks included — via characterization tests\ngit checkout -b test/characterize-pricing\npnpm test -- --coverage src/pricing\n# branch coverage on src/pricing/*.ts went 41% -> 92%\n# 6 new tests document existing rounding and tax-edge behavior\ngit commit -am \"test: characterize pricing module (no behavior change)\"\ngh pr merge --squash\n\n# step 2: refactor against the now-trustworthy oracle\ngit checkout -b refactor/extract-pricing\npnpm test && pnpm tsc --noEmit\n# 148 passed, 0 type errors — any red is a real regression, not unknown territory",
+    "language": "bash",
+    "description": "characterization tests pin observed behavior, including quirks; refactor proceeds against verified-green"
+  },
+  {
+    "ruleId": "safety-verify-after",
+    "ruleTitle": "Rerun Tests, Type-Check, and Static Analysis After Every Refactor Batch",
+    "type": "bad",
+    "code": "# IDE rename + save + commit + push\ngit commit -am \"refactor: rename\"\ngit push\n# remote CI fails 11 minutes later; the failing import blocks 3 unrelated PRs\n# the refactor is rolled back; the wasted CI minutes are gone",
+    "language": "bash",
+    "description": "no local verification — CI carries the cost of broken imports and blocks other PRs"
+  },
+  {
+    "ruleId": "safety-verify-after",
+    "ruleTitle": "Rerun Tests, Type-Check, and Static Analysis After Every Refactor Batch",
+    "type": "good",
+    "code": "# verification triad: behavior, types, lint\npnpm test && pnpm tsc --noEmit && pnpm lint --max-warnings 0\n# 142 passed, 0 failed\n# 0 type errors\n# 0 lint warnings\ngit commit -am \"refactor: rename OrderService.process -> OrderService.submit\"\ngit push   # CI confirms what we already verified locally",
+    "language": "bash",
+    "description": "local verification gate runs the full triad before push"
+  },
+  {
+    "ruleId": "triggers-behavior-preserving",
+    "ruleTitle": "Refactoring Preserves Observable Behavior",
+    "type": "bad",
+    "code": "// commit: \"refactor: extract OrderService\"\nfunction placeOrder(order: Order): Receipt {\n  if (order.items.length === 0) throw new EmptyOrderError()   // new guard\n  if (order.total < 0)          throw new InvalidTotalError() // new guard\n  return orderService.submit(order)                            // pure extraction\n}",
+    "language": "ts",
+    "description": "a single commit conflates Extract Method with two new validation guards"
+  },
+  {
+    "ruleId": "triggers-behavior-preserving",
+    "ruleTitle": "Refactoring Preserves Observable Behavior",
+    "type": "good",
+    "code": "// commit 1: \"refactor: extract OrderService.submit\" — observationally equivalent\nfunction placeOrder(order: Order): Receipt {\n  return orderService.submit(order)\n}\n\n// commit 2: \"feat: reject empty and negative-total orders\" — behavior change\nfunction placeOrder(order: Order): Receipt {\n  if (order.items.length === 0) throw new EmptyOrderError()\n  if (order.total < 0)          throw new InvalidTotalError()\n  return orderService.submit(order)\n}",
+    "language": "ts",
+    "description": "two commits with disjoint intent and independent test coverage"
+  },
+  {
+    "ruleId": "triggers-hot-files",
+    "ruleTitle": "Prioritize Files With High Relative Churn (Top-Decile Hotspots)",
+    "type": "bad",
+    "code": "# legacy/format-1999.ts: 1 commit in 24 months\ngit log --since=\"24 months ago\" --pretty=oneline -- legacy/format-1999.ts\n# a1b2c3d  fix typo in comment\n\n# yet the file gets a 400-line \"modernization\" PR",
+    "language": "bash",
+    "description": "refactoring a low-churn legacy helper — defect risk and ROI are both negligible"
+  },
+  {
+    "ruleId": "triggers-hot-files",
+    "ruleTitle": "Prioritize Files With High Relative Churn (Top-Decile Hotspots)",
+    "type": "good",
+    "code": "# rank by edit frequency over a 90-day window (relative churn proxy)\ngit log --since=\"90 days ago\" --pretty=format: --name-only \\\n  | grep -v '^$' | sort | uniq -c | sort -rn | head\n#   18 api/orders.ts        <-- top-decile hotspot\n#   12 api/payments.ts\n#    9 web/checkout.tsx\n#    2 legacy/format-1999.ts\n\n# augment with lines-touched (severity of churn) before committing scope\ngit log --since=\"90 days ago\" --numstat -- api/orders.ts \\\n  | awk 'NF==3 {add+=$1; del+=$2} END {print \"+\"add, \"-\"del}'\n# +812 -640    <-- high relative churn, well above repo median",
+    "language": "bash",
+    "description": "relative-churn ranking surfaces hotspots; refactor the top-decile target"
+  },
+  {
+    "ruleId": "triggers-pain-driven",
+    "ruleTitle": "Start From Concrete Maintenance Pain, Not Aesthetic Preference",
+    "type": "bad",
+    "code": "PR #482  refactor: clean up utils/format.ts\n---\nDescription:\nRenamed a few variables, split a function. The file looked dated.",
+    "language": "text",
+    "description": "refactor with no stated pain — high probability of deferral or rejection"
+  },
+  {
+    "ruleId": "triggers-pain-driven",
+    "ruleTitle": "Start From Concrete Maintenance Pain, Not Aesthetic Preference",
+    "type": "good",
+    "code": "PR #482  refactor: extract parseCurrency from utils/format.ts\n---\nMotivation (process signal):\n  - utils/format.ts modified in 14 of the last 50 commits\n  - 3 of last 4 feature PRs touching it carried a rounding regression\n    (#471, #475, #479)\n  - 2 reviewer comments explicitly asked to \"split the parser out\"\nHypothesis: extracting parseCurrency localizes rounding logic, so\nthe next feature PR becomes a single-file change.",
+    "language": "text",
+    "description": "refactor anchored to a measured, recurring pain signal"
+  },
+  {
+    "ruleId": "triggers-readability",
+    "ruleTitle": "Readability Improvements Are Evidence-Supported Refactor Goals",
+    "type": "bad",
+    "code": "function priceFor(o: Order) {\n  return calc(o.items, o.discount)\n}\n\nfunction calc(items: Item[], d: number) {\n  return items.reduce((a, it) => a + it.price * it.qty, 0) * (1 - d)\n}",
+    "language": "ts",
+    "description": "extraction adds indirection without naming intermediate concepts"
+  },
+  {
+    "ruleId": "triggers-readability",
+    "ruleTitle": "Readability Improvements Are Evidence-Supported Refactor Goals",
+    "type": "good",
+    "code": "function priceFor(order: Order): Money {\n  const subtotal = sumLineItems(order.items)\n  return applyPercentDiscount(subtotal, order.discount)\n}\n\nfunction sumLineItems(items: Item[]): Money {\n  return items.reduce((acc, item) => acc + item.price * item.qty, 0)\n}\n\nfunction applyPercentDiscount(amount: Money, discountFraction: number): Money {\n  return amount * (1 - discountFraction)\n}",
+    "language": "ts",
+    "description": "Extract Method names the intermediate concepts the reader needs"
+  }
+]
