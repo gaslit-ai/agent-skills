@@ -1,44 +1,53 @@
 ---
-title: Reuse Reference Ontologies Before Inventing Local Synonyms
+title: Reuse Reference Ontologies When They Match the Competency Questions
 impact: HIGH
-tags: architecture, reuse, reference-ontology, foundational-ontology, ontology-design-patterns
+impactDescription: Redundant local vocabularies increase integration and alignment work.
+evidenceStrength: HIGH
+corroborationCount: 7
+claimType: Source-backed evidence plus derived software guidance
+tags: architecture, reuse, reference-ontology, obo, mireot, ontology-design-patterns, upper-ontology
 ---
 
-## Reuse Reference Ontologies Before Inventing Local Synonyms
+## Reuse Reference Ontologies When They Match the Competency Questions
 
-When a term already exists in a dependable domain, upper, or reference ontology, reuse or reference it rather than mint a local synonym. The OBO Foundry (Smith et al. 2007) and the Gene Ontology (Ashburner et al. 2000) demonstrate at scale that coordinated, non-redundant reuse of reference terms across hundreds of contributors is the mechanism by which integration becomes tractable; MIREOT (Courtot et al. 2011) operationalizes the minimum metadata for importing external terms into a local ontology; Ontology Design Patterns (Gangemi 2005; Gangemi & Presutti 2009) capture reusable modelling fragments derived from recurring conceptualization problems; DOLCE (Borgo et al. 2022) and BFO (Otte, Beverley & Ruttenberg 2022) provide upper-level distinctions (continuant vs. occurrent, dependent vs. independent) whose alignment dramatically lowers integration cost. Local synonyms minted in ignorance of these references create silent disagreement at every downstream interface — exactly the integration tax reference ontologies exist to remove.
+**Source-backed evidence:** The OBO Foundry paper states that ontology proliferation can itself create obstacles to integration and proposes coordinated principles for interoperable biomedical ontologies. The Gene Ontology paper presents a controlled vocabulary for unifying biological annotations; MIREOT proposes guidelines for referencing required external ontology terms because full OWL imports can be impractical, changing, or inference-disruptive.
 
-**Incorrect (local synonym invented without checking reusable reference vocabularies):**
+**Derived engineering rule:** Before minting a local shared term, check whether a reference ontology, upper ontology, domain ontology, or ontology design pattern already satisfies the competency question. Reuse should be selective and justified: the cited MIREOT work supports referencing needed external terms rather than blindly importing entire external ontologies.
+
+**Incorrect — synthetic implementation sketch only:**
 
 ```ts
+// Synthetic anti-pattern: local synonym created before checking reference terms.
 export const CellPart = {
-  iri: "https://acme.example/ontology#CellPart",
-  definition: "Something inside a biological cell."
+  iri: "https://ontology.example/lab#CellPart",
+  definition: "Something that is part of a biological cell."
 };
 ```
 
-**Correct (Gene Ontology term referenced via MIREOT-style import, with explicit local alias preserved for tooling):**
+**Correct — synthetic implementation sketch only:**
 
 ```ts
-export const referencedTerms = {
-  cellularComponent: {
-    iri: "http://purl.obolibrary.org/obo/GO_0005575",
-    source: "Gene Ontology",
-    localAlias: "CellularComponent"
-  }
-} as const;
+type ExternalOntologyReference = {
+  localAlias: string;
+  externalIri: string;
+  sourceOntology: string;
+  reuseReason: string;
+};
 
-export const assayOntology = {
-  imports: [referencedTerms.cellularComponent.iri],
-  localTerms: ["AcmeAssayRun", "AcmeSamplePreparation"]
-} as const;
+export const CellularComponentRef: ExternalOntologyReference = {
+  localAlias: "CellularComponent",
+  externalIri: "http://purl.obolibrary.org/obo/GO_0005575",
+  sourceOntology: "Gene Ontology",
+  reuseReason:
+    "Matches the competency question about annotating assay observations by cellular component."
+};
 ```
 
 References:
-- [Smith et al. (2007) — The OBO Foundry: Coordinated Evolution of Ontologies to Support Biomedical Data Integration](https://www.nature.com/articles/nbt1346)
-- [Ashburner et al. (2000) — Gene Ontology: Tool for the Unification of Biology](https://www.nature.com/articles/ng0500_25)
-- [Courtot et al. (2011) — MIREOT: The Minimum Information to Reference an External Ontology Term](https://journals.sagepub.com/doi/10.3233/AO-2011-0087)
-- [Gangemi (2005) — Ontology Design Patterns for Semantic Web Content](https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content)
-- [Gangemi & Presutti (2009) — Ontology Design Patterns](https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns)
-- [Borgo et al. (2022) — DOLCE: A Descriptive Ontology for Linguistic and Cognitive Engineering](https://journals.sagepub.com/doi/10.3233/AO-210259)
-- [Otte, Beverley & Ruttenberg (2022) — BFO: Basic Formal Ontology](https://journals.sagepub.com/doi/10.3233/AO-220262)
+- [Smith et al. — The OBO Foundry](https://www.nature.com/articles/nbt1346)
+- [Ashburner et al. — Gene Ontology: Tool for the Unification of Biology](https://www.nature.com/articles/ng0500_25)
+- [Courtot et al. — MIREOT: The Minimum Information to Reference an External Ontology Term](https://journals.sagepub.com/doi/10.3233/AO-2011-0087)
+- [Gangemi — Ontology Design Patterns for Semantic Web Content](https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content)
+- [Gangemi & Presutti — Ontology Design Patterns](https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns)
+- [Otte, Beverley & Ruttenberg — BFO: Basic Formal Ontology](https://journals.sagepub.com/doi/10.3233/AO-220262)
+- [Borgo et al. — DOLCE: A Descriptive Ontology for Linguistic and Cognitive Engineering](https://journals.sagepub.com/doi/10.3233/AO-210259)

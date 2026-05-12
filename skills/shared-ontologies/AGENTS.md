@@ -1,6 +1,6 @@
 # Shared Ontologies
 
-**Version 0.1.0**  
+**Version 0.2.0**  
 Duke Engineering  
 May 2026
 
@@ -12,27 +12,27 @@ May 2026
 
 ## Abstract
 
-Evidence-based playbook for shared ontologies in software systems. Synthesizes 50+ peer-reviewed or canonical sources from ontology engineering (Gruber; Grüninger & Fox; METHONTOLOGY; NeOn; Ontology Requirements Specification), semantic web standards (OWL 2 profiles, OBDA, SHACL/ShEx), software-engineering ontology literature, biomedical ontology infrastructure (OBO Foundry, Gene Ontology, MIREOT), upper ontologies (DOLCE, BFO), modularity research, ontology evaluation (OntoClean, OOPS!, RDFUnit), ontology evolution and versioning (PAV, Flouris, Zablith), schema and ontology matching (Rahm & Bernstein; Euzenat & Shvaiko), and collaborative ontology engineering (WebProtégé, NeOn governance) into a small set of high-leverage rules covering requirements, architecture, validation, evolution, and governance.
+Evidence-based playbook for shared ontologies in software systems — semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts. Each rule separates source-backed evidence (synthesized from cited literature) from derived engineering guidance. Per-rule frontmatter records evidenceStrength and corroborationCount in place of subjective confidence levels. Code examples are synthetic implementation sketches, not examples observed in the cited papers. Synthesizes 50+ peer-reviewed or canonical sources spanning ontology engineering (Gruber, Grüninger & Fox, METHONTOLOGY, NeOn, Ontology Requirements Specification), semantic web standards (OWL 2 profiles, OBDA, SHACL/ShEx, R2RML), software-engineering ontology literature, biomedical ontology infrastructure (OBO Foundry, Gene Ontology, MIREOT), upper ontologies (DOLCE, BFO), modularity research, ontology evaluation (OntoClean, OOPS!, RDFUnit), ontology evolution and versioning (PAV, Flouris, Zablith), schema and ontology matching (Rahm & Bernstein; Euzenat & Shvaiko), and collaborative ontology engineering (WebProtégé, NeOn governance) into rules covering requirements, architecture, validation, evolution, and governance.
 
 ---
 
 ## Table of Contents
 
 1. [Requirements — Purpose, Scope, and Contract](#1-requirements--purpose-scope-and-contract) — **CRITICAL**
-   - 1.1 [Start Shared Ontologies From Competency Questions, Not Term Lists](#11-start-shared-ontologies-from-competency-questions-not-term-lists)
-   - 1.2 [Treat the Shared Ontology as a Semantic Contract, Not a Naming Convention](#12-treat-the-shared-ontology-as-a-semantic-contract-not-a-naming-convention)
+   - 1.1 [Define Ontology Scope With Competency Questions Before Adding Shared Terms](#11-define-ontology-scope-with-competency-questions-before-adding-shared-terms)
+   - 1.2 [Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions](#12-treat-shared-ontology-terms-as-semantic-contracts-not-naming-conventions)
 2. [Architecture — Reuse, Modularity, and Expressivity](#2-architecture--reuse-modularity-and-expressivity) — **HIGH**
-   - 2.1 [Modularize the Ontology Around Stable Interface Boundaries](#21-modularize-the-ontology-around-stable-interface-boundaries)
-   - 2.2 [Reuse Reference Ontologies Before Inventing Local Synonyms](#22-reuse-reference-ontologies-before-inventing-local-synonyms)
-   - 2.3 [Use the Weakest Formalism That Satisfies the Required Inference](#23-use-the-weakest-formalism-that-satisfies-the-required-inference)
+   - 2.1 [Choose Ontology Expressivity From the Required Inference and Validation Workload](#21-choose-ontology-expressivity-from-the-required-inference-and-validation-workload)
+   - 2.2 [Modularize Shared Ontologies Around Stable Software and Data Boundaries](#22-modularize-shared-ontologies-around-stable-software-and-data-boundaries)
+   - 2.3 [Reuse Reference Ontologies When They Match the Competency Questions](#23-reuse-reference-ontologies-when-they-match-the-competency-questions)
 3. [Validation — Release-Gate Checks](#3-validation--release-gate-checks) — **CRITICAL**
-   - 3.1 [Validate Ontologies With Tests, Reasoners, Shapes, and Pitfall Scanners](#31-validate-ontologies-with-tests-reasoners-shapes-and-pitfall-scanners)
+   - 3.1 [Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks](#31-validate-ontology-releases-with-competency-tests-reasoners-shapes-and-pitfall-checks)
 4. [Evolution — Versioning and Mappings](#4-evolution--versioning-and-mappings) — **CRITICAL**
-   - 4.1 [Make Cross-Ontology Mappings First-Class Artifacts](#41-make-cross-ontology-mappings-first-class-artifacts)
-   - 4.2 [Version Ontology Changes as Contract Migrations](#42-version-ontology-changes-as-contract-migrations)
+   - 4.1 [Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts](#41-make-schema-to-ontology-and-ontology-to-ontology-mappings-first-class-artifacts)
+   - 4.2 [Version Ontology Changes as Semantic Migrations](#42-version-ontology-changes-as-semantic-migrations)
 5. [Governance — Editorial Workflow and Measurement](#5-governance--editorial-workflow-and-measurement) — **HIGH**
    - 5.1 [Govern Shared Ontologies With Collaborative Editorial Workflow](#51-govern-shared-ontologies-with-collaborative-editorial-workflow)
-   - 5.2 [Measure Ontology Value by Operational Use, Not Aesthetic Completeness](#52-measure-ontology-value-by-operational-use-not-aesthetic-completeness)
+   - 5.2 [Measure Ontology Value by Operational Interoperability, Not Term Count](#52-measure-ontology-value-by-operational-interoperability-not-term-count)
 
 ---
 
@@ -42,79 +42,105 @@ Evidence-based playbook for shared ontologies in software systems. Synthesizes 5
 
 A shared ontology becomes unbounded the moment it is treated as a list of preferred names. The ontology-engineering literature converges on two prerequisites before any term is minted: explicit competency questions and motivating scenarios that define the verification target, and explicit definitions, relations, and constraints that turn each term into a commitment rather than a label. Skip either and the ontology cannot be evaluated, scoped, or relied on at integration boundaries.
 
-### 1.1 Start Shared Ontologies From Competency Questions, Not Term Lists
+### 1.1 Define Ontology Scope With Competency Questions Before Adding Shared Terms
 
-**Impact: CRITICAL**
+**Impact: CRITICAL (Unscoped shared vocabularies create ambiguous integration artifacts rather than shared semantics.)**
 
-Before a shared ontology enters a codebase, express its purpose as competency questions (CQs), motivating scenarios, intended users, intended uses, scope, and expected granularity. Grüninger & Fox (1995) introduced CQs as informal requirements that subsequently become formal entailment targets the ontology must answer; Noy & McGuinness's *Ontology Development 101* (2001) and the METHONTOLOGY (Fernández-López et al. 1997), NeOn (Suárez-Figueroa, Gómez-Pérez & Fernández-López 2015), and Ontology Requirements Specification Document (Suárez-Figueroa, Gómez-Pérez & Villazón-Terrazas 2012) frameworks each treat the requirements artefact — domain, purpose, intended users, CQs, pre-glossary — as the agreement boundary between domain experts and engineers and the evaluation oracle for the resulting ontology. Term-first vocabularies cannot be evaluated for fitness (no entailment to test against), cannot be scoped (no exclusion criteria), and routinely collapse under stakeholder disagreement because no question pins what each term must support.
+**Source-backed evidence:** Grüninger and Fox characterize an ontology through competency questions and identify axioms needed to represent and answer them; Noy and McGuinness describe competency questions as a way to determine ontology scope and later test whether the ontology contains enough information. Ontology requirements literature similarly requires intended uses, end users, requirements, and motivating scenarios; NeOn and METHONTOLOGY both treat ontology development as a lifecycle with requirements, reuse, specification, conceptualization, implementation, and evaluation activities.
 
-**Incorrect: a vocabulary dump — no user, no task, no query, no verification target**
+**Derived engineering rule:** Do not add a shared ontology term to a codebase, schema, graph, or generated type unless it is traceable to a competency question, ontology requirement, or accepted integration scenario. The rule is derived from the cited methodology work: if the ontology's expected questions are not stated, downstream software cannot distinguish shared meaning from a shared label.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-export const ontologyTerms = [
+// Synthetic anti-pattern: a shared term list with no scope, user, query, or test.
+export const enterpriseTerms = [
   "Customer",
   "Account",
-  "Identity",
-  "Entitlement",
-  "Segment"
+  "Party",
+  "Owner",
+  "Identity"
 ] as const;
 ```
 
-**Correct: competency questions, scope, and intended consumers fix the verification target up front**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const competencyQuestions = [
-  {
-    id: "CQ-001",
-    asks: "Which legal party owns this account at a given effective time?",
-    requiredTerms: ["LegalParty", "Account", "owns", "effectiveTime"],
-    expectedQuery: "account.owner.where(effectiveTime <= t)"
-  }
-] as const;
+type CompetencyQuestion = {
+  id: string;
+  question: string;
+  requiredTerms: readonly string[];
+  acceptanceTest: string;
+};
 
-export const ontologyScope = {
-  domain: "customer-account ownership",
-  excluded: ["marketing segmentation", "credit underwriting"],
-  intendedUsers: ["billing-service", "identity-service", "compliance-reporting"]
-} as const;
+export const customerAccountOntologyScope = {
+  intendedUse: "Resolve account ownership for billing and compliance queries.",
+  intendedUsers: ["billing-service", "compliance-reporting", "identity-service"],
+  excludedUses: ["marketing segmentation", "credit-risk scoring"],
+  competencyQuestions: [
+    {
+      id: "CQ-001",
+      question: "Which legal party owned an account at a given effective time?",
+      requiredTerms: ["LegalParty", "Account", "ownsAccount", "effectiveTime"],
+      acceptanceTest: "query(CQ-001) returns exactly one owner for audited examples"
+    }
+  ]
+} satisfies {
+  intendedUse: string;
+  intendedUsers: readonly string[];
+  excludedUses: readonly string[];
+  competencyQuestions: readonly CompetencyQuestion[];
+};
 ```
 
-Reference: [https://www.sciencedirect.com/science/article/pii/S1071581985710816](https://www.sciencedirect.com/science/article/pii/S1071581985710816), [https://www.researchgate.net/publication/2653385_The_Role_of_Competency_Questions_in_Enterprise_Engineering](https://www.researchgate.net/publication/2653385_The_Role_of_Competency_Questions_in_Enterprise_Engineering), [https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html](https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html), [https://aaai.org/papers/0005-ss97-06-005-methontology-from-ontological-art-towards-ontological-engineering/](https://aaai.org/papers/0005-ss97-06-005-methontology-from-ontological-art-towards-ontological-engineering/), [https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document](https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document), [https://journals.sagepub.com/doi/abs/10.3233/AO-150145](https://journals.sagepub.com/doi/abs/10.3233/AO-150145)
+Reference: [https://www.researchgate.net/publication/2653385_The_Role_of_Competency_Questions_in_Enterprise_Engineering](https://www.researchgate.net/publication/2653385_The_Role_of_Competency_Questions_in_Enterprise_Engineering), [https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html](https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html), [https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document](https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document), [https://journals.sagepub.com/doi/abs/10.3233/AO-150145](https://journals.sagepub.com/doi/abs/10.3233/AO-150145), [https://aaai.org/papers/0005-ss97-06-005-methontology-from-ontological-art-towards-ontological-engineering/](https://aaai.org/papers/0005-ss97-06-005-methontology-from-ontological-art-towards-ontological-engineering/), [https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications](https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications), [https://periodicos.ufmg.br/index.php/jidm/article/view/124](https://periodicos.ufmg.br/index.php/jidm/article/view/124), [https://www.sciencedirect.com/science/article/pii/S1071581985710816](https://www.sciencedirect.com/science/article/pii/S1071581985710816)
 
-### 1.2 Treat the Shared Ontology as a Semantic Contract, Not a Naming Convention
+### 1.2 Treat Shared Ontology Terms as Semantic Contracts, Not Naming Conventions
 
-**Impact: CRITICAL**
+**Impact: CRITICAL (Shared labels without formal definitions preserve ambiguity across services and schemas.)**
 
-Gruber's "A Translation Approach to Portable Ontology Specifications" (1993) defines an ontology as an explicit specification of a conceptualization — vocabulary, definitions, relations, axioms — that an agent commits to when sharing knowledge; Uschold & Grüninger (1996) generalize this to inter-agent agreement on representational vocabulary, not on choice of label. The software-engineering ontology literature (Calero, Ruiz & Piattini 2006; Ruiz & Hilera 2006; Happel & Seedorf 2006; Akerman & Tyree 2006) treats common terminology with explicit definitions, relations, and constraints as the prerequisite for reuse across stakeholders, models, and tools. A shared label without a definition, a broader/narrower relation, or a constraint is not a contract — it is a naming collision waiting to surface the first time two services with identical labels turn out to disagree on extension.
+**Source-backed evidence:** Gruber defines an ontology as an explicit specification of a representational vocabulary, including definitions of classes, relations, functions, and other objects. OWL 2 specifies ontologies as formally defined vocabularies containing classes, properties, individuals, and data values; software-engineering ontology literature argues that ontologies help reduce terminology mismatch among people, organizations, tools, and software artifacts.
 
-**Incorrect: same label, different semantics across services — no commitment, no contract**
+**Derived engineering rule:** A shared software ontology term should carry at least a stable identifier, definition, relation semantics, provenance, and intended use. A TypeScript type alias, enum value, database column, or JSON field name alone is not a semantic contract because the cited ontology literature treats formalized meaning — not spelling — as the object of sharing.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-type BillingCustomer = { id: string; customerType: "customer" };
-type SupportCustomer = { id: string; customerType: "customer" };
-// no shared definition: payer? user? legal party? contact?
+// Synthetic anti-pattern: identical label, unresolved semantics.
+type CustomerId = string;
+
+// In one service: payer.
+// In another service: login subject.
+// In another service: legal account owner.
+export function loadCustomer(id: CustomerId) {
+  return fetch(`/customers/${id}`);
+}
 ```
 
-**Correct: each term carries IRI, label, definition, and a broader-than relation — a commitment downstream consumers can reason about**
+**Correct — synthetic implementation sketch only**
 
 ```ts
 type OntologyTerm = {
   iri: string;
-  label: string;
+  preferredLabel: string;
   definition: string;
   broader?: string;
+  relations: readonly string[];
+  provenance: string;
 };
 
 export const LegalCustomer: OntologyTerm = {
-  iri: "https://acme.example/ontology/customer#LegalCustomer",
-  label: "Legal customer",
+  iri: "https://ontology.example/customer/v2#LegalCustomer",
+  preferredLabel: "Legal customer",
   definition:
-    "A legal party that has entered into an accountable commercial relationship with Acme.",
-  broader: "https://acme.example/ontology/party#LegalParty"
+    "A legal party that has an accountable commercial relationship with the organization.",
+  broader: "https://ontology.example/party/v1#LegalParty",
+  relations: ["ownsAccount", "hasBillingResponsibility"],
+  provenance: "ADR-ONT-042; accepted by billing, compliance, and identity owners"
 };
 ```
 
-Reference: [https://tomgruber.org/writing/ontolingua-kaj-1993/](https://tomgruber.org/writing/ontolingua-kaj-1993/), [https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications](https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications), [https://link.springer.com/book/10.1007/3-540-34518-3](https://link.springer.com/book/10.1007/3-540-34518-3), [https://link.springer.com/chapter/10.1007/3-540-34518-3_2](https://link.springer.com/chapter/10.1007/3-540-34518-3_2), [https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering](https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering), [https://www.researchgate.net/publication/224101625_Using_ontology_to_support_development_of_software_architectures](https://www.researchgate.net/publication/224101625_Using_ontology_to_support_development_of_software_architectures)
+Reference: [https://tomgruber.org/writing/ontolingua-kaj-1993/](https://tomgruber.org/writing/ontolingua-kaj-1993/), [https://www.sciencedirect.com/science/article/pii/S1071581985710816](https://www.sciencedirect.com/science/article/pii/S1071581985710816), [https://www.w3.org/TR/owl2-overview/](https://www.w3.org/TR/owl2-overview/), [https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications](https://www.researchgate.net/publication/302937543_Ontologies_Principles_methods_and_applications), [https://link.springer.com/book/10.1007/3-540-34518-3](https://link.springer.com/book/10.1007/3-540-34518-3), [https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering](https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering), [https://www.researchgate.net/publication/224101625_Using_ontology_to_support_development_of_software_architectures](https://www.researchgate.net/publication/224101625_Using_ontology_to_support_development_of_software_architectures)
 
 ---
 
@@ -124,94 +150,135 @@ Reference: [https://tomgruber.org/writing/ontolingua-kaj-1993/](https://tomgrube
 
 Architectural decisions — what to reuse from existing reference and upper ontologies, how to decompose into modules with stable interfaces, and which formalism to commit to — set the lifetime cost of the ontology. Monolithic vocabularies, locally-minted synonyms of well-known terms, and choosing a logic stronger than the required inference each create durable maintenance and reasoning overhead.
 
-### 2.1 Modularize the Ontology Around Stable Interface Boundaries
+### 2.1 Choose Ontology Expressivity From the Required Inference and Validation Workload
 
-**Impact: HIGH**
+**Impact: HIGH (Excessive expressivity raises implementation and reasoning cost; insufficient expressivity fails to encode required semantics.)**
 
-Cuenca Grau, Horrocks, Kazakov & Sattler (2008) formalize ontology modules with locality-based extraction guaranteeing that an importer reasons over exactly the entailments it depends on and no more; Stuckenschmidt, Parent & Spaccapietra (2009) treat modularity as the engineering response to monolithic reasoning, import, change-propagation, and reuse cost; Rector, Brandt, Drummond & Horridge (2011) document use-cases — change containment, parallel development, scoped reasoning, safe extraction — that justify modular decomposition in OWL; Pathak, Johnson & Chute (2009) survey biomedical modularization techniques showing measurable gains in load time and reasoning latency; Stuckenschmidt & Klein and d'Aquin et al. extend this to reasoning under change and knowledge selection. A monolithic shared ontology forces every importer to absorb the entire conceptualization plus its reasoning cost and review surface; modules with explicit imports and stable interfaces let services depend on exactly the slice they actually use.
+**Source-backed evidence:** OWL 2 defines a language with formal semantics for classes, properties, individuals, and data values; OWL 2 Profiles explicitly trade expressive power for reasoning efficiency and describe EL, QL, and RL profiles for different reasoning workloads. SHACL is a W3C language for validating RDF graphs against shape constraints, while DL-Lite and OBDA literature target tractable query answering and access to data through conceptual schemas and mappings.
 
-**Incorrect: every service imports the whole enterprise ontology — every change to any unrelated term ripples through every consumer**
+**Derived engineering rule:** Select the weakest formalism that satisfies the software task: SKOS-like vocabularies for lightweight classification, OWL profiles for required open-world inference, SHACL for closed-world data validation, R2RML/OBDA mappings for relational data access, and full OWL DL only when the required reasoning justifies it. This is derived from the cited profile, validation, and OBDA literature, not from a claim that one formalism dominates all others.
 
-```ts
-import { EnterpriseOntology } from "@acme/ontology/all";
-
-const term = EnterpriseOntology.anything.CustomerLifecycleState;
-```
-
-**Correct: service imports only the stable, versioned modules it depends on — change containment is structural, not aspirational**
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-import { CustomerCore } from "@acme/ontology/customer-core/v2";
-import { AccountRelations } from "@acme/ontology/account-relations/v1";
-
-export const requiredOntologyModules = [
-  CustomerCore.moduleIri,
-  AccountRelations.moduleIri
-] as const;
-```
-
-Reference: [https://www.researchgate.net/publication/220543139_Modular_Reuse_of_Ontologies_Theory_and_Practice](https://www.researchgate.net/publication/220543139_Modular_Reuse_of_Ontologies_Theory_and_Practice), [https://link.springer.com/book/10.1007/978-3-642-01907-4](https://link.springer.com/book/10.1007/978-3-642-01907-4), [https://www.researchgate.net/publication/262175610_Engineering_use_cases_for_modular_development_of_ontologies_in_OWL](https://www.researchgate.net/publication/262175610_Engineering_use_cases_for_modular_development_of_ontologies_in_OWL), [https://journals.sagepub.com/doi/pdf/10.3233/ICA-2009-0315](https://journals.sagepub.com/doi/pdf/10.3233/ICA-2009-0315), [https://research.vu.nl/en/publications/reasoning-and-change-management-in-modular-ontologies/](https://research.vu.nl/en/publications/reasoning-and-change-management-in-modular-ontologies/), [https://www.researchgate.net/publication/221464995_Ontology_Modularization_for_Knowledge_Selection_Experiments_and_Evaluations](https://www.researchgate.net/publication/221464995_Ontology_Modularization_for_Knowledge_Selection_Experiments_and_Evaluations)
-
-### 2.2 Reuse Reference Ontologies Before Inventing Local Synonyms
-
-**Impact: HIGH**
-
-When a term already exists in a dependable domain, upper, or reference ontology, reuse or reference it rather than mint a local synonym. The OBO Foundry (Smith et al. 2007) and the Gene Ontology (Ashburner et al. 2000) demonstrate at scale that coordinated, non-redundant reuse of reference terms across hundreds of contributors is the mechanism by which integration becomes tractable; MIREOT (Courtot et al. 2011) operationalizes the minimum metadata for importing external terms into a local ontology; Ontology Design Patterns (Gangemi 2005; Gangemi & Presutti 2009) capture reusable modelling fragments derived from recurring conceptualization problems; DOLCE (Borgo et al. 2022) and BFO (Otte, Beverley & Ruttenberg 2022) provide upper-level distinctions (continuant vs. occurrent, dependent vs. independent) whose alignment dramatically lowers integration cost. Local synonyms minted in ignorance of these references create silent disagreement at every downstream interface — exactly the integration tax reference ontologies exist to remove.
-
-**Incorrect: local synonym invented without checking reusable reference vocabularies**
-
-```ts
-export const CellPart = {
-  iri: "https://acme.example/ontology#CellPart",
-  definition: "Something inside a biological cell."
+// Synthetic anti-pattern: maximum formalism selected without workload analysis.
+export const ontologyRuntime = {
+  language: "OWL-DL",
+  reasoner: "global",
+  reason: "formal ontologies should always use the strongest logic"
 };
 ```
 
-**Correct: Gene Ontology term referenced via MIREOT-style import, with explicit local alias preserved for tooling**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const referencedTerms = {
-  cellularComponent: {
-    iri: "http://purl.obolibrary.org/obo/GO_0005575",
-    source: "Gene Ontology",
-    localAlias: "CellularComponent"
+type OntologyFormalismDecision = {
+  requirement: string;
+  selectedFormalism: "SKOS" | "OWL2-EL" | "OWL2-QL" | "OWL2-RL" | "SHACL" | "R2RML";
+  reason: string;
+};
+
+export const formalismDecisions: readonly OntologyFormalismDecision[] = [
+  {
+    requirement: "Validate required fields and cardinalities in incoming RDF data.",
+    selectedFormalism: "SHACL",
+    reason: "Closed-world constraint validation against data graphs."
+  },
+  {
+    requirement: "Expose relational source tables through ontology-level queries.",
+    selectedFormalism: "R2RML",
+    reason: "Mapping relational data to RDF terms for ontology-based access."
+  },
+  {
+    requirement: "Classify a large biomedical-style class hierarchy.",
+    selectedFormalism: "OWL2-EL",
+    reason: "OWL 2 EL is designed for large ontologies with polynomial-time reasoning."
   }
-} as const;
-
-export const assayOntology = {
-  imports: [referencedTerms.cellularComponent.iri],
-  localTerms: ["AcmeAssayRun", "AcmeSamplePreparation"]
-} as const;
+];
 ```
 
-Reference: [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346), [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25), [https://journals.sagepub.com/doi/10.3233/AO-2011-0087](https://journals.sagepub.com/doi/10.3233/AO-2011-0087), [https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content](https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content), [https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns](https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns), [https://journals.sagepub.com/doi/10.3233/AO-210259](https://journals.sagepub.com/doi/10.3233/AO-210259), [https://journals.sagepub.com/doi/10.3233/AO-220262](https://journals.sagepub.com/doi/10.3233/AO-220262)
+Reference: [https://www.w3.org/TR/owl2-overview/](https://www.w3.org/TR/owl2-overview/), [https://www.w3.org/TR/owl2-profiles/](https://www.w3.org/TR/owl2-profiles/), [https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3199003](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3199003), [https://research.manchester.ac.uk/en/publications/reducing-owl-entailment-to-description-logic-satisfiability](https://research.manchester.ac.uk/en/publications/reducing-owl-entailment-to-description-logic-satisfiability), [https://www.w3.org/TR/shacl/](https://www.w3.org/TR/shacl/), [https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm](https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm), [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777)
 
-### 2.3 Use the Weakest Formalism That Satisfies the Required Inference
+### 2.2 Modularize Shared Ontologies Around Stable Software and Data Boundaries
 
-**Impact: HIGH**
+**Impact: HIGH (Monolithic ontologies increase reasoning, import, review, and downstream change cost.)**
 
-Pick expressivity from the required reasoning workload, not from a default assumption that "ontology" means OWL DL. The OWL 2 Profiles specification (Motik et al. 2012) deliberately splits EL, QL, and RL with distinct PTIME and AC0 complexity guarantees for classification, conjunctive-query answering, and rule-based materialization respectively; McGuinness & van Harmelen (2004) and Horrocks, Patel-Schneider & van Harmelen (2003) trace the SHIQ → OWL design lineage exposing the expressivity-vs-reasoning trade; Xiao et al.'s OBDA survey (IJCAI 2018) and Calvanese et al.'s DL-LiteA work show that query-rewriting tractability is the deployment-critical property for ontology-based data access; SHACL and ShEx (Labra Gayo et al. 2024) cover closed-world constraint validation, a fundamentally different problem from open-world entailment. Mixing concerns — encoding business validation as OWL axioms, or expressing what should be an axiom as imperative TypeScript — produces an ontology that is simultaneously too weak for the inference required and too strong for tractable reasoning.
+**Source-backed evidence:** Modular ontology research reports that ontologies become larger and more complex to manage as their number and size grow, and that modularization supports extracting or managing parts relevant to particular scenarios. Rector et al. classify modular OWL development use cases including organization, stable software-interface bindings, localization, extension, and encapsulation; Cuenca Grau et al. formalize modular reuse using concepts such as safety, conservative extension, and module extraction.
 
-**Incorrect: business logic, constraints, and inference ad-hoc in code — no formal semantics, no validation gate, no reasoner check**
+**Derived engineering rule:** A software system should import the smallest ontology module that satisfies its competency questions and integration contract. Treat an ontology module like a semantic API: version it, publish its imports, test its closure properties, and avoid making every service depend on a whole-enterprise ontology.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-function isBillableCustomer(x: any): boolean {
-  return x.kind === "person" && x.status !== "deleted" && !!x.paymentMethod;
-}
+// Synthetic anti-pattern: every service imports the entire enterprise ontology.
+import { EnterpriseOntology } from "@example/ontology/all";
+
+export const ownerClass = EnterpriseOntology.Customer.Account.Owner;
 ```
 
-**Correct: explicit OWL 2 profile chosen for the required inference, closed-world validation delegated to SHACL, code role bounded**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const ontologyProfile = {
-  vocabulary: "OWL2-EL",
-  reasonerChecks: ["subclassConsistency", "propertyDomainRange"],
-  closedWorldValidation: "SHACL",
-  codePolicy: "Application code may consume inferred classes but must not redefine them."
-} as const;
+type OntologyModuleDependency = {
+  moduleIri: string;
+  version: string;
+  requiredFor: readonly string[];
+};
+
+export const billingOntologyDependencies: readonly OntologyModuleDependency[] = [
+  {
+    moduleIri: "https://ontology.example/customer-core",
+    version: "2.1.0",
+    requiredFor: ["CQ-001", "CQ-004"]
+  },
+  {
+    moduleIri: "https://ontology.example/account-relations",
+    version: "1.8.0",
+    requiredFor: ["CQ-001"]
+  }
+];
 ```
 
-Reference: [https://www.researchgate.net/publication/200034408_OWL_Web_Ontology_Language---Overview](https://www.researchgate.net/publication/200034408_OWL_Web_Ontology_Language---Overview), [https://www.w3.org/TR/owl2-profiles/](https://www.w3.org/TR/owl2-profiles/), [https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3199003](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3199003), [https://research.manchester.ac.uk/en/publications/reducing-owl-entailment-to-description-logic-satisfiability](https://research.manchester.ac.uk/en/publications/reducing-owl-entailment-to-description-logic-satisfiability), [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777), [https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm](https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm), [https://link.springer.com/book/10.1007/978-3-031-79478-0](https://link.springer.com/book/10.1007/978-3-031-79478-0)
+Reference: [https://journals.sagepub.com/doi/pdf/10.3233/ICA-2009-0315](https://journals.sagepub.com/doi/pdf/10.3233/ICA-2009-0315), [https://www.researchgate.net/publication/262175610_Engineering_use_cases_for_modular_development_of_ontologies_in_OWL](https://www.researchgate.net/publication/262175610_Engineering_use_cases_for_modular_development_of_ontologies_in_OWL), [https://www.researchgate.net/publication/220543139_Modular_Reuse_of_Ontologies_Theory_and_Practice](https://www.researchgate.net/publication/220543139_Modular_Reuse_of_Ontologies_Theory_and_Practice), [https://link.springer.com/book/10.1007/978-3-642-01907-4](https://link.springer.com/book/10.1007/978-3-642-01907-4), [https://journals.sagepub.com/doi/10.3233/AO-2011-0087](https://journals.sagepub.com/doi/10.3233/AO-2011-0087), [https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web](https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web)
+
+### 2.3 Reuse Reference Ontologies When They Match the Competency Questions
+
+**Impact: HIGH (Redundant local vocabularies increase integration and alignment work.)**
+
+**Source-backed evidence:** The OBO Foundry paper states that ontology proliferation can itself create obstacles to integration and proposes coordinated principles for interoperable biomedical ontologies. The Gene Ontology paper presents a controlled vocabulary for unifying biological annotations; MIREOT proposes guidelines for referencing required external ontology terms because full OWL imports can be impractical, changing, or inference-disruptive.
+
+**Derived engineering rule:** Before minting a local shared term, check whether a reference ontology, upper ontology, domain ontology, or ontology design pattern already satisfies the competency question. Reuse should be selective and justified: the cited MIREOT work supports referencing needed external terms rather than blindly importing entire external ontologies.
+
+**Incorrect — synthetic implementation sketch only**
+
+```ts
+// Synthetic anti-pattern: local synonym created before checking reference terms.
+export const CellPart = {
+  iri: "https://ontology.example/lab#CellPart",
+  definition: "Something that is part of a biological cell."
+};
+```
+
+**Correct — synthetic implementation sketch only**
+
+```ts
+type ExternalOntologyReference = {
+  localAlias: string;
+  externalIri: string;
+  sourceOntology: string;
+  reuseReason: string;
+};
+
+export const CellularComponentRef: ExternalOntologyReference = {
+  localAlias: "CellularComponent",
+  externalIri: "http://purl.obolibrary.org/obo/GO_0005575",
+  sourceOntology: "Gene Ontology",
+  reuseReason:
+    "Matches the competency question about annotating assay observations by cellular component."
+};
+```
+
+Reference: [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346), [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25), [https://journals.sagepub.com/doi/10.3233/AO-2011-0087](https://journals.sagepub.com/doi/10.3233/AO-2011-0087), [https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content](https://www.researchgate.net/publication/221466152_Ontology_Design_Patterns_for_Semantic_Web_Content), [https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns](https://www.researchgate.net/publication/227215903_Ontology_Design_Patterns), [https://journals.sagepub.com/doi/10.3233/AO-220262](https://journals.sagepub.com/doi/10.3233/AO-220262), [https://journals.sagepub.com/doi/10.3233/AO-210259](https://journals.sagepub.com/doi/10.3233/AO-210259)
 
 ---
 
@@ -221,35 +288,47 @@ Reference: [https://www.researchgate.net/publication/200034408_OWL_Web_Ontology_
 
 A shared ontology is executable semantic infrastructure. Releases that ship without reasoner consistency checks, competency-question entailment, SHACL/ShEx data-shape validation, and empirically-grounded pitfall scans deliver distributed defects directly into downstream consumers — annotations, queries, generated code, and integration mappings inherit every undetected error.
 
-### 3.1 Validate Ontologies With Tests, Reasoners, Shapes, and Pitfall Scanners
+### 3.1 Validate Ontology Releases With Competency Tests, Reasoners, Shapes, and Pitfall Checks
 
-**Impact: CRITICAL**
+**Impact: CRITICAL (Shared ontology defects propagate into schemas, mappings, generated code, queries, and data validation.)**
 
-Every ontology release should pass structural, logical, competency-question, and data-shape validation; otherwise the ontology ships distributed defects directly into downstream consumers. Gómez-Pérez (2004) catalogs the criteria — consistency, completeness, conciseness, expandability, sensitiveness — that ontology evaluation has to discriminate; Brank, Grobelnik & Mladenić (2005) survey the evaluation landscape across gold-standard, application-driven, data-driven, and human-assessment families; OntoClean (Guarino & Welty, CACM 2002) targets taxonomic misuse using rigidity, unity, identity, and dependence meta-properties; OOPS! (Poveda-Villalón, Gómez-Pérez & Suárez-Figueroa 2014) is an empirically-grounded pitfall scanner derived from cataloging errors across hundreds of ontologies; RDFUnit and the broader test-driven linked-data quality work (Kontokostas et al. 2014; Labra Gayo et al. 2024 on RDF validation with SHACL/ShEx) operationalize ontology and data quality as executable test cases. A "ship it" without these checks lets unsatisfiable classes, inconsistent axiom sets, unanswerable CQs, and OOPS-catalogued pitfalls into production.
+**Source-backed evidence:** Ontology-evaluation surveys define evaluation as judging whether an ontology fits an application criterion; OntoClean targets taxonomic modeling errors using formal metaproperties; OOPS catalogs ontology pitfalls from empirical analysis of hundreds of ontologies. SHACL defines machine-checkable validation reports for RDF graphs, and RDFUnit proposes test-driven quality assessment for vocabularies, ontologies, and knowledge bases.
 
-**Incorrect: ontology package ships without semantic or data-conformance tests — no reasoner, no shapes, no pitfall scan**
+**Derived engineering rule:** A shared ontology release should not be accepted solely because files parse or terms look reasonable. Require executable checks tied to competency questions, logical consistency, shape conformance, known ontology pitfalls, and data-quality metrics relevant to the intended software application.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-export const release = {
-  version: "3.4.0",
-  terms: loadTerms(),
-  tests: []
+// Synthetic anti-pattern: release gate verifies only that files exist.
+export const ontologyReleaseGate = {
+  parses: true,
+  filesPresent: ["ontology.ttl"],
+  semanticTests: []
 };
 ```
 
-**Correct: release gate enumerates the reasoner, CQ, SHACL, and pitfall-scanner checks that must pass before publish**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const ontologyReleaseChecks = [
-  "reasoner:consistent-classes",
-  "reasoner:no-unsatisfiable-classes",
-  "cq:all-competency-questions-answerable",
-  "shacl:all-production-sample-data-valid",
-  "pitfalls:oops-critical-zero"
-] as const;
+type OntologyReleaseCheck =
+  | "competency-questions-pass"
+  | "reasoner-consistency-pass"
+  | "no-unsatisfiable-classes"
+  | "shacl-production-samples-pass"
+  | "critical-pitfalls-zero"
+  | "mapping-tests-pass";
+
+export const ontologyReleaseGate: readonly OntologyReleaseCheck[] = [
+  "competency-questions-pass",
+  "reasoner-consistency-pass",
+  "no-unsatisfiable-classes",
+  "shacl-production-samples-pass",
+  "critical-pitfalls-zero",
+  "mapping-tests-pass"
+];
 ```
 
-Reference: [https://oa.upm.es/72438/](https://oa.upm.es/72438/), [https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques](https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques), [https://www.semanticscholar.org/paper/OOPS%21-%28OntOlogy-Pitfall-Scanner%21%29%3A-An-On-line-Tool-Poveda-Villal%C3%B3n-G%C3%B3mez-P%C3%A9rez/28f692a5b6e61ab48bece1221f4e17e05a9a8139](https://www.semanticscholar.org/paper/OOPS%21-%28OntOlogy-Pitfall-Scanner%21%29%3A-An-On-line-Tool-Poveda-Villal%C3%B3n-G%C3%B3mez-P%C3%A9rez/28f692a5b6e61ab48bece1221f4e17e05a9a8139), [https://cacm.acm.org/research/evaluating-ontological-decisions-with-ontoclean/](https://cacm.acm.org/research/evaluating-ontological-decisions-with-ontoclean/), [https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality](https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality), [https://link.springer.com/book/10.1007/978-3-031-79478-0](https://link.springer.com/book/10.1007/978-3-031-79478-0)
+Reference: [https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques](https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques), [https://cacm.acm.org/research/evaluating-ontological-decisions-with-ontoclean/](https://cacm.acm.org/research/evaluating-ontological-decisions-with-ontoclean/), [https://www.semanticscholar.org/paper/OOPS%21-%28OntOlogy-Pitfall-Scanner%21%29%3A-An-On-line-Tool-Poveda-Villal%C3%B3n-G%C3%B3mez-P%C3%A9rez/28f692a5b6e61ab48bece1221f4e17e05a9a8139](https://www.semanticscholar.org/paper/OOPS%21-%28OntOlogy-Pitfall-Scanner%21%29%3A-An-On-line-Tool-Poveda-Villal%C3%B3n-G%C3%B3mez-P%C3%A9rez/28f692a5b6e61ab48bece1221f4e17e05a9a8139), [https://www.w3.org/TR/shacl/](https://www.w3.org/TR/shacl/), [https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality](https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality), [https://content.iospress.com/articles/semantic-web/sw175](https://content.iospress.com/articles/semantic-web/sw175), [https://link.springer.com/book/10.1007/978-3-031-79478-0](https://link.springer.com/book/10.1007/978-3-031-79478-0)
 
 ---
 
@@ -259,66 +338,96 @@ Reference: [https://oa.upm.es/72438/](https://oa.upm.es/72438/), [https://www.re
 
 Ontology changes affect data, APIs, queries, generated code, annotations, reasoning results, and downstream integrations. The two artefacts that keep change tractable are explicit versioning with provenance, deprecation, and migration rules, and first-class cross-ontology mappings that make heterogeneity visible, reviewable, and testable instead of hidden inside service code.
 
-### 4.1 Make Cross-Ontology Mappings First-Class Artifacts
+### 4.1 Make Schema-to-Ontology and Ontology-to-Ontology Mappings First-Class Artifacts
 
-**Impact: HIGH**
+**Impact: HIGH (Shared ontologies do not eliminate semantic heterogeneity; they expose where mappings must be specified and tested.)**
 
-Naming a shared ontology does not eliminate semantic heterogeneity — local schemas, bounded contexts, and historical data sources continue to use their own representations, so mappings to the shared vocabulary remain a permanent integration concern. Euzenat & Shvaiko's *Ontology Matching* (2013) and Shvaiko & Euzenat's state-of-the-art survey (2013) frame alignments as the central versioned integration artefact; Rahm & Bernstein (2001) catalog schema-matching approaches whose taxonomy remains canonical for relational and structural matching; COMA++ (Aumueller, Do, Massmann & Rahm 2005) operationalizes composite mapping with confidence scoring and reuse of prior alignments; Wache et al.'s ontology-based integration survey (2001) catalogs single-ontology, multiple-ontology, and hybrid approaches; Xiao et al.'s OBDA survey (IJCAI 2018) and Corcho, Priyatna & Chaves-Fraga (2020) connect mappings to query rewriting against local data sources in production deployments. A hidden mapping embedded inside a service function is unreviewable, unversioned, unauthenticated, and untested — every downstream service that consumes its output silently inherits its errors.
+**Source-backed evidence:** Schema-matching research identifies matching as a basic problem in data integration, semantic query processing, and related systems; ontology-matching surveys treat alignment as a distinct research problem with continuing challenges. Ontology-based data access literature uses mappings between local data sources and global conceptual schemas, while R2RML specifies customized mappings from relational databases to RDF datasets.
 
-**Incorrect: hidden semantic mapping embedded in service code — no review, no version, no confidence, no test**
+**Derived engineering rule:** Do not bury ontology mappings inside adapter code, SQL string manipulation, field-normalization functions, or undocumented ETL conventions. Store mappings as versioned, testable, reviewable artifacts with source schema, target ontology term, transformation rule, cardinality assumption, provenance, and affected competency questions.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-function normalizeOrder(row: any) {
+// Synthetic anti-pattern: semantic mapping hidden in procedural normalization.
+export function normalizeOwner(row: Record<string, unknown>) {
   return {
-    customerId: row.client_id ?? row.party_ref ?? row.account_holder
+    ownerId: row.client_id ?? row.party_ref ?? row.account_holder_id
   };
 }
 ```
 
-**Correct: mapping is an explicit, versioned, confidence-annotated, testable artefact with declared source and target**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const sourceToOntologyMappings = [
-  {
-    source: "billing.client_id",
-    target: "https://acme.example/ontology/customer#LegalCustomer",
-    relation: "identifies",
-    confidence: 0.98,
-    tests: ["billing-client-id-resolves-to-one-legal-customer"]
-  }
-] as const;
+type SourceToOntologyMapping = {
+  sourceField: string;
+  targetTermIri: string;
+  relation: string;
+  cardinality: "one-to-one" | "many-to-one" | "one-to-many";
+  transformation: string;
+  tests: readonly string[];
+};
+
+export const billingOwnerMapping: SourceToOntologyMapping = {
+  sourceField: "billing.client_id",
+  targetTermIri: "https://ontology.example/customer/v2#LegalCustomer",
+  relation: "identifies",
+  cardinality: "many-to-one",
+  transformation: "Resolve billing.client_id through billing_party_registry.",
+  tests: ["client-id-resolves-to-legal-customer", "cq-001-owner-query-uses-mapping"]
+};
 ```
 
-Reference: [https://link.springer.com/book/10.1007/978-3-642-38721-0](https://link.springer.com/book/10.1007/978-3-642-38721-0), [https://www.researchgate.net/publication/260324688_Ontology_Matching_State_of_the_Art_and_Future_Challenges](https://www.researchgate.net/publication/260324688_Ontology_Matching_State_of_the_Art_and_Future_Challenges), [https://vldb.org/vldb_journal/index.php/component/article_manager/article/839](https://vldb.org/vldb_journal/index.php/component/article_manager/article/839), [https://www.researchgate.net/publication/221212846_Schema_and_ontology_matching_with_COMA](https://www.researchgate.net/publication/221212846_Schema_and_ontology_matching_with_COMA), [https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches](https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches), [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777), [https://journals.sagepub.com/doi/10.3233/SW-190384](https://journals.sagepub.com/doi/10.3233/SW-190384)
+Reference: [https://vldb.org/vldb_journal/index.php/component/article_manager/article/839](https://vldb.org/vldb_journal/index.php/component/article_manager/article/839), [https://www.researchgate.net/publication/260324688_Ontology_Matching_State_of_the_Art_and_Future_Challenges](https://www.researchgate.net/publication/260324688_Ontology_Matching_State_of_the_Art_and_Future_Challenges), [https://www.researchgate.net/publication/221212846_Schema_and_ontology_matching_with_COMA](https://www.researchgate.net/publication/221212846_Schema_and_ontology_matching_with_COMA), [https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches](https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches), [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777), [https://www.w3.org/TR/r2rml/](https://www.w3.org/TR/r2rml/), [https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm](https://www.diag.uniroma1.it/rosati/publications/CDLLPRR08.htm), [https://link.springer.com/article/10.1007/s10844-011-0184-1](https://link.springer.com/article/10.1007/s10844-011-0184-1), [https://www.sciencedirect.com/science/article/pii/S1570826817300276](https://www.sciencedirect.com/science/article/pii/S1570826817300276)
 
-### 4.2 Version Ontology Changes as Contract Migrations
+### 4.2 Version Ontology Changes as Semantic Migrations
 
-**Impact: CRITICAL**
+**Impact: CRITICAL (Ontology changes affect meaning, mappings, annotations, queries, generated types, and downstream integrations.)**
 
-Ontology changes affect data, APIs, queries, generated code, annotations, reasoning results, and downstream integrations — every artefact that committed to the prior conceptualization. Klein & Fensel (2001) frame versioning on the Semantic Web as the explicit management of relations between revisions; Noy & Musen (2004) define change-detection and merging operations within an ontology-management framework; Stojanovic, Stojanovic & Handschuh (2002) treat ontology evolution as a six-phase process from change capture through verification; Flouris et al.'s "Ontology Change: Classification and Survey" (2008) and Zablith et al.'s process-centric survey (2015) classify change kinds and trace the evolution lifecycle; PAV (Ciccarese et al. 2013) standardizes provenance, authoring, and versioning metadata reused across biomedical ontologies; Maedche, Motik & Stojanovic (2003) address distributed ontology management across multiple linked versions. Silently mutating a published term — same IRI, redefined meaning — is a breaking change to every consumer whose data, code, or query committed to its prior interpretation.
+**Source-backed evidence:** Ontology-versioning research states that ontologies are not static and that changing domains, tasks, or conceptualizations require explicit relations between ontology revisions. Ontology-management and evolution literature covers comparing, aligning, merging, maintaining versions, translating ontologies, and keeping ontologies updated as requirements or domains change; PAV describes provenance, authoring, and versioning metadata for web resources.
 
-**Incorrect: silent semantic mutation — same IRI, redefined meaning, no migration, no deprecation, no provenance**
+**Derived engineering rule:** Treat every nontrivial ontology change like a semantic migration, not a text edit. A change that alters class meaning, property meaning, disjointness, domain/range, mapping semantics, or competency-question answers should include version identifiers, provenance, deprecation notes, migration tests, affected modules, and affected software consumers.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
+// Synthetic anti-pattern: same IRI, changed meaning, no migration metadata.
 export const Customer = {
-  iri: "https://acme.example/ontology#Customer",
-  definition: "A person who logs into the application."
+  iri: "https://ontology.example/customer#Customer",
+  definition: "A person who can log in to the product."
+};
+
+// Later, silently changed:
+export const CustomerChanged = {
+  iri: "https://ontology.example/customer#Customer",
+  definition: "A legal party with billable account responsibility."
 };
 ```
 
-**Correct: new version IRI, prior version explicitly deprecated, migration rule documented, provenance preserved**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-export const Customer_v2 = {
-  iri: "https://acme.example/ontology/v2#Customer",
-  definition: "A legal party with an accountable commercial relationship.",
-  replaces: "https://acme.example/ontology/v1#Customer",
-  migration: "map v1 Customer where kind=person to v2 NaturalPersonCustomer",
-  deprecatedTerms: ["https://acme.example/ontology/v1#Customer"]
+type OntologyMigration = {
+  fromIri: string;
+  toIri: string;
+  changeType: "rename" | "split" | "merge" | "semantic-narrowing" | "semantic-broadening";
+  affectedCompetencyQuestions: readonly string[];
+  migrationTests: readonly string[];
+  provenance: string;
+};
+
+export const CustomerMigrationV1ToV2: OntologyMigration = {
+  fromIri: "https://ontology.example/customer/v1#Customer",
+  toIri: "https://ontology.example/customer/v2#LegalCustomer",
+  changeType: "semantic-narrowing",
+  affectedCompetencyQuestions: ["CQ-001", "CQ-009"],
+  migrationTests: ["legacy-customer-to-legal-customer-mapping", "cq-001-still-answers"],
+  provenance: "PAV-compatible release note; approved in ONT-1042"
 };
 ```
 
-Reference: [https://www.researchgate.net/publication/2377424_Ontology_versioning_on_the_Semantic_Web](https://www.researchgate.net/publication/2377424_Ontology_versioning_on_the_Semantic_Web), [https://www.researchgate.net/publication/3454215_Ontology_versioning_in_an_ontology_management_framework](https://www.researchgate.net/publication/3454215_Ontology_versioning_in_an_ontology_management_framework), [https://aisel.aisnet.org/ecis2002/123/](https://aisel.aisnet.org/ecis2002/123/), [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/EEF2FB377B9125CBB784E6F1B6853404/S0269888908001367a.pdf/ontology-change-classification-and-survey.pdf](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/EEF2FB377B9125CBB784E6F1B6853404/S0269888908001367a.pdf/ontology-change-classification-and-survey.pdf), [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CE4387A954917B7CA3282CE25FAC09FA/S0269888913000349a.pdf/ontology-evolution-a-process-centric-survey.pdf](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CE4387A954917B7CA3282CE25FAC09FA/S0269888913000349a.pdf/ontology-evolution-a-process-centric-survey.pdf), [https://jbiomedsem.biomedcentral.com/articles/10.1186/2041-1480-4-37](https://jbiomedsem.biomedcentral.com/articles/10.1186/2041-1480-4-37), [https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web](https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web)
+Reference: [https://www.researchgate.net/publication/2377424_Ontology_versioning_on_the_Semantic_Web](https://www.researchgate.net/publication/2377424_Ontology_versioning_on_the_Semantic_Web), [https://www.researchgate.net/publication/3454215_Ontology_versioning_in_an_ontology_management_framework](https://www.researchgate.net/publication/3454215_Ontology_versioning_in_an_ontology_management_framework), [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CE4387A954917B7CA3282CE25FAC09FA/S0269888913000349a.pdf/ontology-evolution-a-process-centric-survey.pdf](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CE4387A954917B7CA3282CE25FAC09FA/S0269888913000349a.pdf/ontology-evolution-a-process-centric-survey.pdf), [https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web](https://research.manchester.ac.uk/en/publications/managing-multiple-and-distributed-ontologies-on-the-semantic-web), [https://jbiomedsem.biomedcentral.com/articles/10.1186/2041-1480-4-37](https://jbiomedsem.biomedcentral.com/articles/10.1186/2041-1480-4-37), [https://www.aaai.org/Library/AAAI/2000/aaai00-070.php](https://www.aaai.org/Library/AAAI/2000/aaai00-070.php), [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346)
 
 ---
 
@@ -330,59 +439,92 @@ A shared ontology encodes social agreement among stakeholders, so the editorial 
 
 ### 5.1 Govern Shared Ontologies With Collaborative Editorial Workflow
 
-**Impact: HIGH**
+**Impact: HIGH (Shared ontologies encode cross-team commitments; single-actor edits create local semantics with global blast radius.)**
 
-A shared ontology encodes social agreement among stakeholders; solo edits create local truth masquerading as enterprise truth. Simperl & Luczak-Rösch's collaborative-ontology-engineering survey (KER 2014) shows empirically that community-driven, workflow-managed change is the sustainable maintenance model; WebProtégé (Tudorache, Nyulas, Noy & Musen 2013; Horridge et al. 2019) demonstrates production deployment of role-based collaborative editing with discussion threads, change proposals, and review; Holsapple & Joshi (CACM 2002) frame ontology design as a collaborative process gated by structured domain-expert input; Palma et al. (2011) treat change management as the integrating mechanism for distributed ontology development; the NeOn methodology (Suárez-Figueroa et al. 2015) and the OBO Foundry's editorial process (Smith et al. 2007) operationalize roles, proposals, and decision records as the apparatus that converts disagreement into versioned change. Without a workflow, the ontology becomes whatever the last engineer to push believed it should be — at which point it stops being a shared contract.
+**Source-backed evidence:** Collaborative ontology-engineering surveys describe community-driven ontology engineering as a central paradigm and argue that useful ontologies require environments supporting collaboration and user participation. WebProtégé is described as a web-based ontology editor and knowledge-acquisition tool with collaboration support; other work proposes collaborative ontology design, explicit editorial workflows, change representation, and version management.
 
-**Incorrect: developer-local semantic authority — no domain expert, no review, no decision record**
+**Derived engineering rule:** A shared ontology change should pass through an editorial process involving affected domain experts, data owners, software owners, and ontology maintainers. Review should include affected competency questions, mappings, downstream consumers, validation results, and migration requirements.
+
+**Incorrect — synthetic implementation sketch only**
 
 ```ts
-await ontologyRepo.merge({
-  author: "backend-dev",
-  change: "rename Party to Customer because it sounds clearer",
-  reviewers: []
+// Synthetic anti-pattern: semantic change merged as an ordinary local refactor.
+await ontologyRepository.merge({
+  change: "Rename Party to Customer because Customer sounds clearer.",
+  proposer: "one-service-owner",
+  reviewers: [],
+  affectedMappings: [],
+  affectedCompetencyQuestions: []
 });
 ```
 
-**Correct: proposal references the affected terms and CQs, names the required reviewers, and produces a decision record**
+**Correct — synthetic implementation sketch only**
 
 ```ts
-await ontologyRepo.proposeChange({
-  changeId: "ONT-742",
-  affectedTerms: ["Party", "Customer"],
-  competencyQuestions: ["CQ-001", "CQ-017"],
-  reviewers: ["domain-owner", "data-architect", "service-owner"],
-  decisionRecord: "ADR-ontology-742-party-customer-boundary"
-});
-```
+type OntologyChangeProposal = {
+  id: string;
+  affectedTerms: readonly string[];
+  affectedCompetencyQuestions: readonly string[];
+  affectedMappings: readonly string[];
+  requiredReviewers: readonly string[];
+  validationEvidence: readonly string[];
+  decisionRecord: string;
+};
 
-Reference: [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192), [https://journals.sagepub.com/doi/10.3233/SW-2012-0057](https://journals.sagepub.com/doi/10.3233/SW-2012-0057), [https://www.researchgate.net/publication/333075611_WebProtege_A_Cloud-Based_Ontology_Editor](https://www.researchgate.net/publication/333075611_WebProtege_A_Cloud-Based_Ontology_Editor), [https://cacm.acm.org/research/a-collaborative-approach-to-ontology-design/](https://cacm.acm.org/research/a-collaborative-approach-to-ontology-design/), [https://www.sciencedirect.com/science/article/abs/pii/S1570826811000503](https://www.sciencedirect.com/science/article/abs/pii/S1570826811000503), [https://journals.sagepub.com/doi/abs/10.3233/AO-150145](https://journals.sagepub.com/doi/abs/10.3233/AO-150145), [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346)
-
-### 5.2 Measure Ontology Value by Operational Use, Not Aesthetic Completeness
-
-**Impact: MEDIUM**
-
-Judge a shared ontology by observable software and data outcomes — annotation coverage, CQ pass rate, queryable integrations, mapping reuse, data-validation pass rate, removed adapter logic, and downstream adoption — not by term count or taxonomic elegance. The Gene Ontology (Ashburner et al. 2000) and the OBO Foundry (Smith et al. 2007) are measured in practice by annotated entity coverage and cross-resource interoperability in production biology; Wache et al. (2001) evaluate ontology-based integration by what it actually queries; the Statoil OBDA deployment (Kharlamov et al. 2017) reports operational metrics — query latency, business-user query authorship rate — as the measure of fit; Corcho, Priyatna & Chaves-Fraga (2020) survey OBDA in production with the same operational orientation; software-engineering ontology literature (Calero, Ruiz & Piattini 2006; Happel & Seedorf 2006) and linked-data quality testing (Kontokostas et al. 2014) evaluate ontologies by the outcomes they enable rather than by curated term counts. Vanity metrics reward growth that nobody consumes.
-
-**Incorrect: vanity metric — counts terms, not whether anyone can use them**
-
-```ts
-const ontologyScore = ontology.terms.length;
-```
-
-**Correct: portfolio of operational outcomes the ontology is supposed to enable, each tied to a downstream consumer**
-
-```ts
-const ontologyScore = {
-  competencyQuestionsPassing: 42 / 44,
-  productionEventsAnnotated: 0.91,
-  mappingsReusedAcrossServices: 18,
-  shaclValidationPassRate: 0.987,
-  adapterBranchesRemoved: 37
+export const partyCustomerBoundaryProposal: OntologyChangeProposal = {
+  id: "ONT-742",
+  affectedTerms: ["Party", "LegalCustomer", "NaturalPerson"],
+  affectedCompetencyQuestions: ["CQ-001", "CQ-017"],
+  affectedMappings: ["billing.client_id -> LegalCustomer"],
+  requiredReviewers: ["domain-owner", "data-architecture", "billing-service-owner"],
+  validationEvidence: ["cq-tests-pass", "mapping-tests-pass", "shacl-tests-pass"],
+  decisionRecord: "ADR-ONT-742"
 };
 ```
 
-Reference: [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25), [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346), [https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches](https://www.researchgate.net/publication/200122923_Ontology-based_integration_of_information_---_a_survey_of_existing_approaches), [https://www.sciencedirect.com/science/article/pii/S1570826817300276](https://www.sciencedirect.com/science/article/pii/S1570826817300276), [https://journals.sagepub.com/doi/10.3233/SW-190384](https://journals.sagepub.com/doi/10.3233/SW-190384), [https://link.springer.com/book/10.1007/3-540-34518-3](https://link.springer.com/book/10.1007/3-540-34518-3), [https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering](https://www.researchgate.net/publication/228386661_Applications_of_ontologies_in_software_engineering), [https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality](https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality)
+Reference: [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192), [https://journals.sagepub.com/doi/10.3233/SW-2012-0057](https://journals.sagepub.com/doi/10.3233/SW-2012-0057), [https://cacm.acm.org/research/a-collaborative-approach-to-ontology-design/](https://cacm.acm.org/research/a-collaborative-approach-to-ontology-design/), [https://www.sciencedirect.com/science/article/abs/pii/S1570826811000503](https://www.sciencedirect.com/science/article/abs/pii/S1570826811000503), [https://journals.sagepub.com/doi/abs/10.3233/AO-150145](https://journals.sagepub.com/doi/abs/10.3233/AO-150145), [https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document](https://www.researchgate.net/publication/220830640_How_to_Write_and_Use_the_Ontology_Requirements_Specification_Document), [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346)
+
+### 5.2 Measure Ontology Value by Operational Interoperability, Not Term Count
+
+**Impact: MEDIUM (A larger ontology is not necessarily more useful; value depends on whether software and data tasks improve.)**
+
+**Source-backed evidence:** Ontology-evaluation literature frames quality relative to application criteria; linked-data quality literature defines quality using dimensions and metrics related to fitness for use. The Gene Ontology and OBO Foundry papers motivate ontologies through annotation, unification, and integration; OBDA case studies and surveys evaluate ontology use through conceptual data access, mappings, and query translation rather than taxonomy size alone.
+
+**Derived engineering rule:** Track operational measures: competency-question pass rate, mapping reuse, validation failures, query success, annotation coverage, number of adapters removed, number of downstream consumers, and migration defect rate. Term count can be an inventory metric, but the cited evaluation, data-quality, and integration literature does not make term count itself a sufficient measure of ontology value.
+
+**Incorrect — synthetic implementation sketch only**
+
+```ts
+// Synthetic anti-pattern: ontology success reduced to vocabulary size.
+export const ontologyHealth = {
+  termCount: 12_000,
+  status: "healthy"
+};
+```
+
+**Correct — synthetic implementation sketch only**
+
+```ts
+type OntologyOperationalMetrics = {
+  competencyQuestionPassRate: number;
+  shaclValidationPassRate: number;
+  mappingTestPassRate: number;
+  downstreamConsumerCount: number;
+  reusedMappingCount: number;
+  adapterBranchesRemoved: number;
+};
+
+export const ontologyHealth: OntologyOperationalMetrics = {
+  competencyQuestionPassRate: 0.98,
+  shaclValidationPassRate: 0.99,
+  mappingTestPassRate: 0.97,
+  downstreamConsumerCount: 14,
+  reusedMappingCount: 38,
+  adapterBranchesRemoved: 22
+};
+```
+
+Reference: [https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques](https://www.researchgate.net/publication/228857266_A_survey_of_ontology_evaluation_techniques), [https://content.iospress.com/articles/semantic-web/sw175](https://content.iospress.com/articles/semantic-web/sw175), [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25), [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346), [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777), [https://www.sciencedirect.com/science/article/pii/S1570826817300276](https://www.sciencedirect.com/science/article/pii/S1570826817300276), [https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality](https://www.researchgate.net/publication/259828947_Test-driven_Evaluation_of_Linked_Data_Quality)
 
 ---
 
@@ -390,11 +532,13 @@ Reference: [https://www.nature.com/articles/ng0500_25](https://www.nature.com/ar
 
 1. [https://tomgruber.org/writing/ontolingua-kaj-1993/](https://tomgruber.org/writing/ontolingua-kaj-1993/)
 2. [https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html](https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html)
-3. [https://www.w3.org/TR/owl2-profiles/](https://www.w3.org/TR/owl2-profiles/)
-4. [https://www.w3.org/TR/shacl/](https://www.w3.org/TR/shacl/)
-5. [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346)
-6. [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25)
-7. [https://link.springer.com/book/10.1007/978-3-642-38721-0](https://link.springer.com/book/10.1007/978-3-642-38721-0)
-8. [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777)
-9. [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192)
-10. [https://link.springer.com/book/10.1007/978-3-031-79478-0](https://link.springer.com/book/10.1007/978-3-031-79478-0)
+3. [https://www.w3.org/TR/owl2-overview/](https://www.w3.org/TR/owl2-overview/)
+4. [https://www.w3.org/TR/owl2-profiles/](https://www.w3.org/TR/owl2-profiles/)
+5. [https://www.w3.org/TR/shacl/](https://www.w3.org/TR/shacl/)
+6. [https://www.w3.org/TR/r2rml/](https://www.w3.org/TR/r2rml/)
+7. [https://www.nature.com/articles/nbt1346](https://www.nature.com/articles/nbt1346)
+8. [https://www.nature.com/articles/ng0500_25](https://www.nature.com/articles/ng0500_25)
+9. [https://link.springer.com/book/10.1007/978-3-642-38721-0](https://link.springer.com/book/10.1007/978-3-642-38721-0)
+10. [https://www.ijcai.org/proceedings/2018/777](https://www.ijcai.org/proceedings/2018/777)
+11. [https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192)
+12. [https://link.springer.com/book/10.1007/978-3-031-79478-0](https://link.springer.com/book/10.1007/978-3-031-79478-0)

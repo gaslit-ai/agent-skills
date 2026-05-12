@@ -11,6 +11,12 @@ metadata:
 
 Evidence-based guidance for shared ontologies in software systems. Grounded in 50+ peer-reviewed or canonical sources from ontology engineering, semantic web, software-engineering ontology, biomedical ontology, data integration, schema matching, and ontology evolution.
 
+## Scope and Factuality Framing
+
+**Scope.** "Shared ontologies" in this skill means shared semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts — not single-service data models.
+
+**Factuality controls.** Each rule separates *source-backed evidence* synthesized from the cited literature from *derived engineering guidance* (the actionable rule). Per-rule frontmatter records `evidenceStrength` and `corroborationCount` (number of independent source families repeating the claim) in place of subjective confidence levels. Code examples are synthetic implementation sketches that illustrate the rule; they are not examples observed in, or claimed by, the cited papers.
+
 ## When to Apply
 
 - Introducing a shared vocabulary across services, teams, or organizations
@@ -40,21 +46,21 @@ Evidence-based guidance for shared ontologies in software systems. Grounded in 5
 
 ## Quick Reference
 
-- `requirements-competency-questions` — express the ontology's purpose as competency questions, scope, and intended users before listing terms
-- `requirements-semantic-contract` — a shared term is a definition, relations, and constraints; not just a label
-- `architecture-reuse-reference` — reuse OBO, GO, MIREOT-referenced, or upper-ontology terms before minting local synonyms
-- `architecture-modular-boundaries` — decompose into modules with explicit imports and stable interfaces
-- `architecture-weakest-formalism` — pick the OWL profile, rule layer, or SHACL shape that fits the required inference; no more
-- `validation-tests-reasoners-shapes` — every release passes reasoner consistency, CQ entailment, SHACL/ShEx, and pitfall-scanner gates
-- `evolution-versioned-migrations` — semantic changes are versioned with provenance, deprecation, and migration rules
-- `evolution-mappings-first-class` — cross-ontology and source-to-ontology mappings are explicit, versioned, testable artefacts
-- `governance-editorial-workflow` — proposals, domain-expert review, and decision records gate every term change
-- `governance-operational-measurement` — judge by CQ pass rate, mapping reuse, validation pass rate, and adapter logic removed
+- `requirements-competency-questions` — Define ontology scope with competency questions before adding shared terms
+- `requirements-semantic-contract` — Treat shared ontology terms as semantic contracts, not naming conventions
+- `architecture-reuse-reference` — Reuse reference ontologies when they match the competency questions
+- `architecture-modular-boundaries` — Modularize shared ontologies around stable software and data boundaries
+- `architecture-weakest-formalism` — Choose ontology expressivity from the required inference and validation workload
+- `validation-tests-reasoners-shapes` — Validate ontology releases with competency tests, reasoners, shapes, and pitfall checks
+- `evolution-versioned-migrations` — Version ontology changes as semantic migrations
+- `evolution-mappings-first-class` — Make schema-to-ontology and ontology-to-ontology mappings first-class artifacts
+- `governance-editorial-workflow` — Govern shared ontologies with collaborative editorial workflow
+- `governance-operational-measurement` — Measure ontology value by operational interoperability, not term count
 
 ## How to Use
 
 1. Pin **requirements** first — competency questions and scope are the evaluation oracle for every subsequent decision.
-2. Make **architecture** choices second — reuse what exists, modularize what you must mint, pick the weakest formalism that supports the required inference.
+2. Make **architecture** choices second — reuse what exists, modularize what you must mint, pick the weakest formalism that supports the required inference and validation workload.
 3. Define **validation** gates before consumers depend on the ontology — reasoner, CQ, SHACL, and pitfall scans.
 4. Plan **evolution** at the same time — every published term has a versioning, deprecation, and mapping policy from day one.
 5. Set **governance** explicitly — roles, proposal workflow, review, decision records, and operational measures that confirm the ontology is being used.
