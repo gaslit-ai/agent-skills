@@ -107,7 +107,10 @@ export async function parseRuleFile(
       continue
     }
 
-    const labelMatch = line.match(/^\*\*([^:]+?):\*?\*?$/)
+    // Labels are bold lines that end with `:**` (optionally with trailing whitespace).
+    // The captured group can contain anything (including colons in URLs inside
+    // markdown links), so we use `.+?` and anchor on `:\*\*$`.
+    const labelMatch = line.match(/^\*\*(.+?):\*\*\s*$/)
     if (labelMatch) {
       if (currentExample) {
         if (additionalText.length > 0) {
@@ -118,7 +121,9 @@ export async function parseRuleFile(
       }
 
       const fullLabel = labelMatch[1].trim()
-      const descMatch = fullLabel.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)\s*\(([^()]+)\)$/)
+      // Strip parenthesized description; the inner group allows nested parens so that
+      // markdown links inside the description (e.g. `[txt](https://...)`) don't break parsing.
+      const descMatch = fullLabel.match(/^([A-Za-z]+(?:\s+[A-Za-z]+)*)\s*\((.+)\)$/)
       currentExample = {
         label: descMatch ? descMatch[1].trim() : fullLabel,
         description: descMatch ? descMatch[2].trim() : undefined,

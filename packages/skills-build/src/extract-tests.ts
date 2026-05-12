@@ -10,8 +10,9 @@ function extractTestCases(ruleId: string, ruleTitle: string, examples: any[]): T
   const tests: TestCase[] = []
 
   for (const example of examples) {
-    const isBad = /incorrect|wrong|bad/i.test(example.label)
-    const isGood = /correct|good/i.test(example.label)
+    // Word-boundary guards: `Incorrect` must not classify as `correct`.
+    const isBad = /\b(incorrect|wrong|bad)\b/i.test(example.label)
+    const isGood = /\b(correct|good)\b/i.test(example.label)
 
     if (!isBad && !isGood) {
       continue

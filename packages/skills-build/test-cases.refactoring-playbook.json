@@ -83,9 +83,17 @@
     "ruleId": "review-intent-commits",
     "ruleTitle": "Commit Messages Encode Refactor Intent, Not Just \"Cleanup",
     "type": "bad",
-    "code": "git log --oneline -3 -- src/cart/\na1b2c3d  refactor(cart): extract CartValidator to localize rounding logic\nb2c3d4e  refactor(cart): rename Cart -> ShoppingCart for domain-model consistency\nc3d4e5f  refactor(cart): inline single-use CartFactory into ShoppingCart.from\n\ngit log -1 --format=fuller a1b2c3d\n# subject:  refactor(cart): extract CartValidator to localize rounding logic\n# body:\n#   Extracts cart-validation predicates from ShoppingCart.submit into\n#   CartValidator so future rounding regressions land in a single file.\n#   No behavior change; covered by existing tests/cart/validator.test.ts.\n# footer: Refs: #482",
+    "code": "git log --oneline -3 -- src/cart/\na1b2c3d  refactor\nb2c3d4e  cleanup\nc3d4e5f  small refactor",
     "language": "text",
     "description": "generic subjects — refactor type, scope, and motivation are unrecoverable"
+  },
+  {
+    "ruleId": "review-intent-commits",
+    "ruleTitle": "Commit Messages Encode Refactor Intent, Not Just \"Cleanup",
+    "type": "good",
+    "code": "git log --oneline -3 -- src/cart/\na1b2c3d  refactor(cart): extract CartValidator to localize rounding logic\nb2c3d4e  refactor(cart): rename Cart -> ShoppingCart for domain-model consistency\nc3d4e5f  refactor(cart): inline single-use CartFactory into ShoppingCart.from\n\ngit log -1 --format=fuller a1b2c3d\n# subject:  refactor(cart): extract CartValidator to localize rounding logic\n# body:\n#   Extracts cart-validation predicates from ShoppingCart.submit into\n#   CartValidator so future rounding regressions land in a single file.\n#   No behavior change; covered by existing tests/cart/validator.test.ts.\n# footer: Refs: #482",
+    "language": "text",
+    "description": "Conventional Commits form: operation + scope + motivation, SAR-classifiable at ~0.90 F1"
   },
   {
     "ruleId": "review-small-prs",
@@ -187,9 +195,17 @@
     "ruleId": "triggers-hot-files",
     "ruleTitle": "Prioritize Files With High Relative Churn (Top-Decile Hotspots)",
     "type": "bad",
-    "code": "# JSON to stdout, status to stderr — pipeable into jq, dashboards, CI.\nscripts/hotspots.sh . --limit 10 --mode roi --since 90d \\\n  | jq -r '.results[] | \"\\(.rank)\\t\\(.score | round)\\t\\(.churn)\\t\\(.lines_of_code)\\t\\(.path)\"'\n# 1   824   18   240   api/orders.ts          <-- top-decile refactor target\n# 2   612   12   180   api/payments.ts\n# 3   504    9   140   web/checkout.tsx\n# 4    24    2    12   legacy/format-1999.ts\n\n# Refactor priority list = top-decile rows; refactor in score-descending order.\n# Prerequisite: `go install github.com/huangsam/hotspot@latest` (script\n# exits with install instructions if `hotspot` is not on PATH).",
+    "code": "# legacy/format-1999.ts: 1 commit in 24 months\ngit log --since=\"24 months ago\" --pretty=oneline -- legacy/format-1999.ts\n# a1b2c3d  fix typo in comment\n\n# yet the file gets a 400-line \"modernization\" PR",
     "language": "bash",
     "description": "refactoring a low-churn legacy helper — defect risk and ROI are both negligible"
+  },
+  {
+    "ruleId": "triggers-hot-files",
+    "ruleTitle": "Prioritize Files With High Relative Churn (Top-Decile Hotspots)",
+    "type": "good",
+    "code": "# JSON to stdout, status to stderr — pipeable into jq, dashboards, CI.\nscripts/hotspots.sh . --limit 10 --mode roi --since 90d \\\n  | jq -r '.results[] | \"\\(.rank)\\t\\(.score | round)\\t\\(.churn)\\t\\(.lines_of_code)\\t\\(.path)\"'\n# 1   824   18   240   api/orders.ts          <-- top-decile refactor target\n# 2   612   12   180   api/payments.ts\n# 3   504    9   140   web/checkout.tsx\n# 4    24    2    12   legacy/format-1999.ts\n\n# Refactor priority list = top-decile rows; refactor in score-descending order.\n# Prerequisite: `go install github.com/huangsam/hotspot@latest` (script\n# exits with install instructions if `hotspot` is not on PATH).",
+    "language": "bash",
+    "description": "invoke the bundled `scripts/hotspots.sh`; thin wrapper around [`hotspot`](https://github.com/huangsam/hotspot) implementing Tornhill ROI scoring with the empirical 90-day window"
   },
   {
     "ruleId": "triggers-pain-driven",

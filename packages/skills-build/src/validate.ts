@@ -34,8 +34,11 @@ function validateRule(rule: Rule, skill: string, file: string): ValidationError[
     return errors
   }
 
-  const hasBad = codeExamples.some((example) => /incorrect|wrong|bad/i.test(example.label))
-  const hasGood = codeExamples.some((example) => /correct|good|usage|implementation|example/i.test(example.label))
+  // Use word boundaries so `Incorrect` does NOT match the "good" regex via the
+  // substring `correct`. Without `\b`, a single example labeled "Incorrect" would
+  // satisfy both hasBad and hasGood and the rule would falsely validate.
+  const hasBad = codeExamples.some((example) => /\b(incorrect|wrong|bad)\b/i.test(example.label))
+  const hasGood = codeExamples.some((example) => /\b(correct|good|usage|implementation|example)\b/i.test(example.label))
 
   if (!hasBad || !hasGood) {
     errors.push({ skill, file, message: 'Need both bad and good code examples' })
