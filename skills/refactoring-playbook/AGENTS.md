@@ -56,6 +56,16 @@ Relative-churn is among the most reliably-validated process metrics for prioriti
 **Incorrect: refactoring a low-churn legacy helper — defect risk and ROI are both negligible**
 
 ```bash
+# legacy/format-1999.ts: 1 commit in 24 months
+git log --since="24 months ago" --pretty=oneline -- legacy/format-1999.ts
+# a1b2c3d  fix typo in comment
+
+# yet the file gets a 400-line "modernization" PR
+```
+
+**Correct: invoke the bundled `scripts/hotspots.sh`; thin wrapper around [`hotspot`](https://github.com/huangsam/hotspot) implementing Tornhill ROI scoring with the empirical 90-day window**
+
+```bash
 # JSON to stdout, status to stderr — pipeable into jq, dashboards, CI.
 scripts/hotspots.sh . --limit 10 --mode roi --since 90d \
   | jq -r '.results[] | "\(.rank)\t\(.score | round)\t\(.churn)\t\(.lines_of_code)\t\(.path)"'
@@ -68,8 +78,6 @@ scripts/hotspots.sh . --limit 10 --mode roi --since 90d \
 # Prerequisite: `go install github.com/huangsam/hotspot@latest` (script
 # exits with install instructions if `hotspot` is not on PATH).
 ```
-
-**Correct (invoke the bundled `scripts/hotspots.sh`; thin wrapper around [`hotspot`](https://github.com/huangsam/hotspot) implementing Tornhill ROI scoring with the empirical 90-day window):**
 
 Reference: [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/icse05churn.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/icse05churn.pdf), [https://arxiv.org/pdf/2101.01430](https://arxiv.org/pdf/2101.01430), [https://pragprog.com/titles/atcrime2/your-code-as-a-crime-scene-second-edition/](https://pragprog.com/titles/atcrime2/your-code-as-a-crime-scene-second-edition/)
 
@@ -345,6 +353,15 @@ Commit messages function as the atomic-grain documentation unit for refactoring 
 
 ```text
 git log --oneline -3 -- src/cart/
+a1b2c3d  refactor
+b2c3d4e  cleanup
+c3d4e5f  small refactor
+```
+
+**Correct: Conventional Commits form: operation + scope + motivation, SAR-classifiable at ~0.90 F1**
+
+```text
+git log --oneline -3 -- src/cart/
 a1b2c3d  refactor(cart): extract CartValidator to localize rounding logic
 b2c3d4e  refactor(cart): rename Cart -> ShoppingCart for domain-model consistency
 c3d4e5f  refactor(cart): inline single-use CartFactory into ShoppingCart.from
@@ -357,8 +374,6 @@ git log -1 --format=fuller a1b2c3d
 #   No behavior change; covered by existing tests/cart/validator.test.ts.
 # footer: Refs: #482
 ```
-
-**Correct (Conventional Commits form: operation + scope + motivation, SAR-classifiable at ~0.90 F1):**
 
 Reference: [https://arxiv.org/abs/2112.01581](https://arxiv.org/abs/2112.01581), [https://mkaouer.net/publication/alomar-2021-toward/alomar-2021-toward.pdf](https://mkaouer.net/publication/alomar-2021-toward/alomar-2021-toward.pdf), [https://www.conventionalcommits.org/en/v1.0.0/](https://www.conventionalcommits.org/en/v1.0.0/)
 
