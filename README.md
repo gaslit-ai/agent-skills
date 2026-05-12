@@ -23,8 +23,8 @@ Unified RFC section-mapping skill for implementation and QA citation work across
 ## Local Workflow
 
 ```bash
-cd packages/duke-dependency-generator-build
+cd packages/skills-build
 pnpm install
-pnpm validate
-pnpm build
+pnpm validate:all
+pnpm build:all
 ```

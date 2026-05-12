@@ -1,0 +1,45 @@
+name: Skills CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'packages/skills-build/**'
+      - '.github/workflows/skills-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'packages/skills-build/**'
+      - '.github/workflows/skills-ci.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/skills-build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.24.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: packages/skills-build/pnpm-lock.yaml
+      - run: pnpm install
+      - run: pnpm validate:all
+      - run: pnpm build:all
+      - name: Verify build outputs are in sync with sources
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Build produced changes — AGENTS.md or test-cases.*.json are out of sync with rules/."
+            echo "Run 'pnpm build:all' locally and commit the regenerated artifacts."
+            git status --short
+            git diff
+            exit 1
+          fi

@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "organization": "Duke Engineering",
+  "date": "May 2026",
+  "abstract": "Evidence-based playbook for shared ontologies in software systems — semantic artifacts used across services, schemas, APIs, knowledge graphs, validation layers, annotations, data-access mappings, or architecture artifacts. Each rule separates source-backed evidence (synthesized from cited literature) from derived engineering guidance. Per-rule frontmatter records evidenceStrength and corroborationCount in place of subjective confidence levels. Code examples are synthetic implementation sketches, not examples observed in the cited papers. Synthesizes 50+ peer-reviewed or canonical sources spanning ontology engineering (Gruber, Grüninger & Fox, METHONTOLOGY, NeOn, Ontology Requirements Specification), semantic web standards (OWL 2 profiles, OBDA, SHACL/ShEx, R2RML), software-engineering ontology literature, biomedical ontology infrastructure (OBO Foundry, Gene Ontology, MIREOT), upper ontologies (DOLCE, BFO), modularity research, ontology evaluation (OntoClean, OOPS!, RDFUnit), ontology evolution and versioning (PAV, Flouris, Zablith), schema and ontology matching (Rahm & Bernstein; Euzenat & Shvaiko), and collaborative ontology engineering (WebProtégé, NeOn governance) into rules covering requirements, architecture, validation, evolution, and governance.",
+  "references": [
+    "https://tomgruber.org/writing/ontolingua-kaj-1993/",
+    "https://protege.stanford.edu/publications/ontology_development/ontology101-noy-mcguinness.html",
+    "https://www.w3.org/TR/owl2-overview/",
+    "https://www.w3.org/TR/owl2-profiles/",
+    "https://www.w3.org/TR/shacl/",
+    "https://www.w3.org/TR/r2rml/",
+    "https://www.nature.com/articles/nbt1346",
+    "https://www.nature.com/articles/ng0500_25",
+    "https://link.springer.com/book/10.1007/978-3-642-38721-0",
+    "https://www.ijcai.org/proceedings/2018/777",
+    "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/S0269888913000192",
+    "https://link.springer.com/book/10.1007/978-3-031-79478-0"
+  ]
+}

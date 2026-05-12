@@ -59,6 +59,17 @@ export async function parseRuleFile(
   let afterCodeBlock = false
   let additionalText: string[] = []
   let hasCodeBlockForCurrentExample = false
+  let inReferencesList = false
+
+  const extractUrls = (line: string): string[] => {
+    const matches = line.match(/\[([^\]]+)\]\(([^)]+)\)/g) ?? []
+    return matches
+      .map((m) => {
+        const inner = m.match(/\[([^\]]+)\]\(([^)]+)\)/)
+        return inner ? inner[2] : ''
+      })
+      .filter(Boolean)
+  }
 
   for (let i = titleLine + 1; i < ruleLines.length; i++) {
     const line = ruleLines[i]
@@ -129,14 +140,27 @@ export async function parseRuleFile(
         currentExample = null
       }
 
-      const refMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)/g)
-      if (refMatch) {
-        references = refMatch.map((ref) => {
-          const m = ref.match(/\[([^\]]+)\]\(([^)]+)\)/)
-          return m ? m[2] : ref
-        })
+      const inlineUrls = extractUrls(line)
+      if (inlineUrls.length > 0) {
+        references.push(...inlineUrls)
       }
+      inReferencesList = true
       continue
+    }
+
+    if (inReferencesList) {
+      const trimmed = line.trim()
+      if (trimmed === '') {
+        continue
+      }
+      if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+        const urls = extractUrls(trimmed)
+        if (urls.length > 0) {
+          references.push(...urls)
+          continue
+        }
+      }
+      inReferencesList = false
     }
 
     if (line.trim() && !line.startsWith('#')) {
