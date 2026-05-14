@@ -10,10 +10,12 @@
     "build:all": "tsx src/build.ts --all && tsx src/extract-tests.ts --all",
     "build:refactoring-playbook": "tsx src/build.ts --skill=refactoring-playbook && tsx src/extract-tests.ts --skill=refactoring-playbook",
     "build:shared-ontologies": "tsx src/build.ts --skill=shared-ontologies && tsx src/extract-tests.ts --skill=shared-ontologies",
+    "build:code-writing": "tsx src/build.ts --skill=code-writing && tsx src/extract-tests.ts --skill=code-writing",
     "validate": "tsx src/validate.ts",
     "validate:all": "tsx src/validate.ts --all",
     "validate:refactoring-playbook": "tsx src/validate.ts --skill=refactoring-playbook",
     "validate:shared-ontologies": "tsx src/validate.ts --skill=shared-ontologies",
+    "validate:code-writing": "tsx src/validate.ts --skill=code-writing",
     "extract-tests": "tsx src/extract-tests.ts",
     "dev": "pnpm build && pnpm validate"
   },

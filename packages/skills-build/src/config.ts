@@ -60,6 +60,27 @@ export const SKILLS: Record<string, SkillConfig> = {
       evolution: 4,
       governance: 5
     }
+  },
+  'code-writing': {
+    name: 'code-writing',
+    title: 'Code Writing',
+    description: 'Evidence-based rules for writing code as a knowledge graph that orients agentic AI in vector space',
+    skillDir: join(SKILLS_DIR, 'code-writing'),
+    referencesDir: join(SKILLS_DIR, 'code-writing/references'),
+    referencesFolder: 'references',
+    metadataFile: join(SKILLS_DIR, 'code-writing/metadata.json'),
+    outputFile: join(SKILLS_DIR, 'code-writing/AGENTS.md'),
+    sectionMap: {
+      identifiers: 1,
+      types: 2,
+      graph: 3,
+      architecture: 3,
+      sizing: 4,
+      composition: 5,
+      descriptors: 6,
+      monorepo: 7,
+      gates: 8
+    }
   }
 }
 
