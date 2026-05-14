@@ -1,0 +1,338 @@
+[
+  {
+    "referenceId": "architecture-dependency-direction",
+    "referenceTitle": "Make Dependency Direction Explicit; Domain Points Inward, Adapters Point Out",
+    "type": "bad",
+    "code": "// src/domain/legal-party.ts — domain depends on transport and infra\nimport express from 'express';                            // wrong direction\nimport { dbPool } from '../infra/postgres-pool';           // wrong direction\n\nexport class LegalParty {\n  static async find(req: express.Request): Promise<LegalParty> {\n    const row = await dbPool.query('SELECT ...');          // domain owns SQL\n    return new LegalParty(row);\n  }\n}",
+    "language": "ts",
+    "description": "domain reaches into HTTP and DB layers; dependency direction inverted"
+  },
+  {
+    "referenceId": "architecture-dependency-direction",
+    "referenceTitle": "Make Dependency Direction Explicit; Domain Points Inward, Adapters Point Out",
+    "type": "good",
+    "code": "// src/domain/legal-party/legal-party.ts — no transport or infra imports\nimport type { LegalPartyId } from './legal-party.types';\n\nexport interface LegalParty {\n  readonly legalPartyId: LegalPartyId;\n  readonly displayName: string;\n}\n\n// Port: declared by domain; signature is the contract.\nexport interface LegalPartyRepository {\n  findById(id: LegalPartyId): Promise<LegalParty | null>;\n}\n\n// src/adapters/postgres/postgres-legal-party-repository.ts\n// Adapter depends on domain (correct direction); domain knows nothing about it.\nimport type { LegalParty, LegalPartyId, LegalPartyRepository }\n  from '@/domain/legal-party';\nimport type { Pool } from 'pg';\n\nexport class PostgresLegalPartyRepository implements LegalPartyRepository {\n  constructor(private readonly pool: Pool) {}\n  async findById(id: LegalPartyId): Promise<LegalParty | null> {\n    const result = await this.pool.query(\n      'SELECT legal_party_id, display_name FROM legal_parties WHERE legal_party_id = $1',\n      [id],\n    );\n    return result.rows[0] ? toLegalParty(result.rows[0]) : null;\n  }\n}",
+    "language": "ts",
+    "description": "domain knows only its own types; adapters depend on domain ports, never reverse"
+  },
+  {
+    "referenceId": "architecture-fitness-functions",
+    "referenceTitle": "Encode Architecture as Executable Fitness Functions, Not Prose",
+    "type": "bad",
+    "code": "<!-- docs/architecture.md -->\n\n# Architecture\n\n- Domain code never imports services.\n- Services never import HTTP/transport layer.\n- Repositories implement interfaces defined in domain.\n\n(There is no test, no lint rule, no CI gate. The next agent will violate at least one.)",
+    "language": "md",
+    "description": "architecture asserted in a README, enforced nowhere"
+  },
+  {
+    "referenceId": "architecture-fitness-functions",
+    "referenceTitle": "Encode Architecture as Executable Fitness Functions, Not Prose",
+    "type": "good",
+    "code": "// .dependency-cruiser.cjs\nmodule.exports = {\n  forbidden: [\n    {\n      name: 'no-domain-to-services',\n      severity: 'error',\n      comment: 'Domain types are pure; they MUST NOT depend on services or transport.',\n      from: { path: '^src/domain' },\n      to:   { path: '^src/(services|transport)' },\n    },\n    {\n      name: 'no-services-to-transport',\n      severity: 'error',\n      comment: 'Services MUST NOT depend on HTTP/transport (hexagonal direction).',\n      from: { path: '^src/services' },\n      to:   { path: '^src/transport' },\n    },\n    {\n      name: 'no-circular',\n      severity: 'error',\n      comment: 'Cycles break hierarchical localization and confuse repo-graph retrieval.',\n      from: {},\n      to:   { circular: true },\n    },\n  ],\n  options: { tsConfig: { fileName: 'tsconfig.json' } },\n};\n\n// package.json\n{\n  \"scripts\": {\n    \"lint:arch\": \"depcruise --config .dependency-cruiser.cjs --validate src\",\n    \"verify\": \"pnpm typecheck && pnpm lint && pnpm lint:arch && pnpm test\"\n  }\n}",
+    "language": "js",
+    "description": "rules expressed as runnable dependency-cruiser config, gated in CI"
+  },
+  {
+    "referenceId": "architecture-functional-core-imperative-shell",
+    "referenceTitle": "Separate the Functional Core From the Imperative Shell; Push Effects to the Edge",
+    "type": "bad",
+    "code": "async function processInvoice(invoiceId: string) {\n  const invoice = await db.invoices.findById(invoiceId);     // I/O\n  if (!invoice) throw new Error('not found');                 // hidden branch\n  const tax = invoice.amount * 0.0875;                        // pure\n  const total = invoice.amount + tax;                          // pure\n  await db.invoices.update(invoiceId, { total });             // I/O\n  await emailService.send(invoice.customerEmail, total);      // I/O\n  return total;\n}",
+    "language": "ts",
+    "description": "pure logic and side effects entangled; exceptions hide the failure path"
+  },
+  {
+    "referenceId": "architecture-functional-core-imperative-shell",
+    "referenceTitle": "Separate the Functional Core From the Imperative Shell; Push Effects to the Edge",
+    "type": "good",
+    "code": "// src/domain/invoice/invoice.ts — pure core, no I/O imports\nexport type InvoiceCalculation =\n  | { readonly kind: 'ok'; readonly total: number; readonly tax: number }\n  | { readonly kind: 'invalid'; readonly reason: 'negative-amount' };\n\nexport function calculateInvoiceTotal(amount: number): InvoiceCalculation {\n  if (amount < 0) return { kind: 'invalid', reason: 'negative-amount' };\n  const tax = amount * 0.0875;\n  return { kind: 'ok', total: amount + tax, tax };\n}\n\n// src/services/invoice/invoice.service.ts — imperative shell, thin and inspectable\nimport type { Result } from '@/shared/result';\nimport { calculateInvoiceTotal } from '@/domain/invoice';\n\nexport async function processInvoice(\n  invoiceId: InvoiceId,\n  deps: { db: InvoiceRepository; mail: MailGateway },\n): Promise<Result<{ total: number }, ProcessInvoiceError>> {\n  const invoice = await deps.db.findById(invoiceId);\n  if (!invoice) return { ok: false, error: { kind: 'not-found', invoiceId } };\n\n  const calc = calculateInvoiceTotal(invoice.amount);\n  if (calc.kind !== 'ok') return { ok: false, error: { kind: 'invalid', reason: calc.reason } };\n\n  await deps.db.update(invoiceId, { total: calc.total });\n  await deps.mail.send(invoice.customerEmail, calc.total);\n  return { ok: true, value: { total: calc.total } };\n}",
+    "language": "ts",
+    "description": "pure core; imperative shell handles all I/O; errors surface in signatures"
+  },
+  {
+    "referenceId": "composition-front-load-intent",
+    "referenceTitle": "Front-Load Every File With a Module-Intent Header and Public Surface",
+    "type": "bad",
+    "code": "function helper1(x: number) { return x * 2; }\nfunction helper2(x: number) { return x + 1; }\n\nexport function compute(a: number, b: number) {\n  return helper1(a) + helper2(b);\n}\n\nfunction helper3(s: string) { return s.trim(); }\nexport function format(s: string) { return helper3(s); }",
+    "language": "ts",
+    "description": "no header, implementation buried under helpers, public surface unmarked"
+  },
+  {
+    "referenceId": "composition-front-load-intent",
+    "referenceTitle": "Front-Load Every File With a Module-Intent Header and Public Surface",
+    "type": "good",
+    "code": "/**\n * billing-summary\n *\n * Computes per-customer billing summaries from raw ledger entries.\n *\n * Inputs:  LedgerEntry[] (immutable, typically from BillingRepository.findByCustomer)\n * Outputs: BillingSummary (used by /billing/summary API + monthly statement job)\n * Invariants: amounts are minor units (integer); currency conversion is out of scope here.\n */\n\n// ── Public surface ─────────────────────────────────────────────────────────\n\nexport interface BillingSummary {\n  readonly legalPartyId: LegalPartyId;\n  readonly totalMinorUnits: number;\n  readonly entryCount: number;\n}\n\nexport function summarizeBilling(\n  legalPartyId: LegalPartyId,\n  entries: readonly LedgerEntry[]\n): BillingSummary {\n  return {\n    legalPartyId,\n    totalMinorUnits: sumMinorUnits(entries),\n    entryCount: entries.length,\n  };\n}\n\n// ── Private implementation ─────────────────────────────────────────────────\n\nfunction sumMinorUnits(entries: readonly LedgerEntry[]): number {\n  return entries.reduce((total, entry) => total + entry.amountMinorUnits, 0);\n}",
+    "language": "ts",
+    "description": "intent header, then public surface, then private implementation"
+  },
+  {
+    "referenceId": "composition-why-not-what-comments",
+    "referenceTitle": "Write Comments That Explain WHY, Not WHAT — Especially at Non-Obvious Constraints",
+    "type": "bad",
+    "code": "// Increment count by 1\ncount += 1;\n\n// Loop through users\nfor (const user of users) {\n  // Set active to true\n  user.active = true;\n}\n\n// Return the result\nreturn result;",
+    "language": "ts",
+    "description": "comments restate the code; no constraint encoded"
+  },
+  {
+    "referenceId": "composition-why-not-what-comments",
+    "referenceTitle": "Write Comments That Explain WHY, Not WHAT — Especially at Non-Obvious Constraints",
+    "type": "good",
+    "code": "// Ledger amounts are stored in minor units (cents) to avoid float drift across\n// currency conversions; do NOT introduce decimal types here without coordinating\n// with the reconciliation service (see ADR-0014).\nconst totalMinorUnits = entries.reduce((sum, entry) => sum + entry.amountMinorUnits, 0);\n\n// Process newest-first: the deduplication step downstream assumes entries are\n// in non-increasing occurredAt order so duplicates collapse onto the newest.\nconst ordered = [...entries].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));\n\n// Hash the email lowercased + trimmed: required by RFC 5321 §2.4 for case-fold\n// equivalence; tests/identity.spec.ts pins the expected hashes.\nconst emailHash = sha256(email.trim().toLowerCase());",
+    "language": "ts",
+    "description": "comments encode invariants and rationale the type system can't"
+  },
+  {
+    "referenceId": "descriptors-adrs-for-non-obvious-decisions",
+    "referenceTitle": "Record Every Non-Obvious Design Decision as an ADR",
+    "type": "bad",
+    "code": "// in src/services/billing/billing.service.ts\n// amounts stored as bigint; no rationale anywhere in the repo\nasync function recordPayment(amountMinorUnits: bigint) { ... }",
+    "language": "ts",
+    "description": "a load-bearing decision is invisible — the next agent breaks it"
+  },
+  {
+    "referenceId": "descriptors-adrs-for-non-obvious-decisions",
+    "referenceTitle": "Record Every Non-Obvious Design Decision as an ADR",
+    "type": "good",
+    "code": "docs/decisions/0014-ledger-amounts-as-minor-units.md\n─────────────────────────────────────────────────────\n# ADR-0014: Ledger amounts stored as minor units (bigint)\n\nStatus: accepted (2026-02-11)\nSupersedes: —\nSuperseded by: —\n\n## Context\nCross-currency reconciliation in 2025 surfaced 0.3% balance drift attributable\nto float arithmetic in invoice→ledger conversion. The drift was eventually\ntraced to repeated USD↔EUR conversions using IEEE-754 doubles.\n\n## Decision\nAll ledger amounts are stored as `bigint` minor units (cents).\nCurrency conversion is the sole responsibility of the reconciliation service.\nDomain types brand minor-unit amounts so accidental mixing with decimals\nis a compile-time error.\n\n## Alternatives considered\n- Decimal128 via decimal.js: rejected because (a) serialization complexity at\n  the API boundary, (b) reconciliation team already standardized on integer\n  minor units in their pipeline.\n- BigDecimal at the API boundary, double internally: rejected — the drift\n  comes from internal operations, not from serialization.\n\n## Consequences\n- Every new amount field MUST use the AmountMinorUnits branded type.\n- The reconciliation service is the only component allowed to apply rates.\n- See src/domain/ledger/AGENTS.md for the public surface that enforces this.",
+    "language": "typescript",
+    "description": "a small ADR encodes the rationale, the alternatives considered, and the consequences"
+  },
+  {
+    "referenceId": "descriptors-agents-md-tiered",
+    "referenceTitle": "Maintain a Tiered AGENTS.md Map — Root Contract, Per-Module Specs, Sub-Agent Definitions",
+    "type": "bad",
+    "code": "repo/\n  README.md   # 80 lines, mostly install instructions\n  src/\n  tests/",
+    "language": "typescript",
+    "description": "no root descriptor, or one monolithic README; agent must reconstruct architecture from filenames alone"
+  },
+  {
+    "referenceId": "descriptors-agents-md-tiered",
+    "referenceTitle": "Maintain a Tiered AGENTS.md Map — Root Contract, Per-Module Specs, Sub-Agent Definitions",
+    "type": "good",
+    "code": "repo/\n  AGENTS.md                # root contract: build/test/conventions/architecture overview\n  .claude/\n    agents/\n      reviewer.md          # sub-agent for PR review\n      refactor.md          # sub-agent for refactoring tasks\n  docs/\n    decisions/\n      0001-typescript-strict.md\n      0014-ledger-minor-units.md\n  src/\n    domain/\n      legal-party/\n        AGENTS.md          # module spec: invariants, public API, tests, owners\n      billing-event/\n        AGENTS.md\n    services/\n      billing/\n        AGENTS.md",
+    "language": "typescript",
+    "description": "tiered descriptor — root contract, module specs, sub-agent definitions"
+  },
+  {
+    "referenceId": "gates-strong-oracles-and-agent-comprehension",
+    "referenceTitle": "Test With Strong Oracles and Add Agent-Comprehension Re-Derivation Checks",
+    "type": "bad",
+    "code": "import { summarizeBilling } from './billing-summary';\n\ntest('summarizeBilling returns something', () => {\n  const result = summarizeBilling('party-1' as any, []);\n  expect(result).toBeDefined();\n});",
+    "language": "ts",
+    "description": "one assertion per test; passes trivially with `return null`"
+  },
+  {
+    "referenceId": "gates-strong-oracles-and-agent-comprehension",
+    "referenceTitle": "Test With Strong Oracles and Add Agent-Comprehension Re-Derivation Checks",
+    "type": "good",
+    "code": "import { summarizeBilling, type BillingSummary } from './billing-summary';\nimport { runAgentComprehensionCheck } from '@/tools/comprehension';\n\ndescribe('summarizeBilling', () => {\n  test('empty entries → zero total, zero count, same legalPartyId', () => {\n    const r = summarizeBilling(legalPartyId('party-1'), []);\n    expect(r).toEqual<BillingSummary>({\n      legalPartyId: legalPartyId('party-1'),\n      totalMinorUnits: 0,\n      entryCount: 0,\n    });\n  });\n\n  test('multiple entries → exact sum and count', () => {\n    const r = summarizeBilling(legalPartyId('party-2'), [\n      entry({ amountMinorUnits: 100 }),\n      entry({ amountMinorUnits: 250 }),\n      entry({ amountMinorUnits: 75 }),\n    ]);\n    expect(r.totalMinorUnits).toBe(425);\n    expect(r.entryCount).toBe(3);\n  });\n\n  test('mutation: swapping reducer to subtraction must fail at least one test',\n    async () => {\n      const verdict = await runMutationProbe('subtract', { module: 'billing-summary' });\n      expect(verdict.killedByTests).toBe(true);\n    });\n});\n\n// Release-gate (run in CI on the public surface only):\ntest('agent re-derives the documented intent', async () => {\n  const summary = await runAgentComprehensionCheck({\n    publicSurfaceFiles: ['src/services/billing/index.ts'],\n    intentArtifact: 'src/services/billing/AGENTS.md',\n  });\n  expect(summary.intentDivergence).toBeLessThan(0.15);\n});",
+    "language": "ts",
+    "description": "strong oracles + agent-comprehension check"
+  },
+  {
+    "referenceId": "gates-type-check-and-lint",
+    "referenceTitle": "Gate Every Commit With Strict Type-Checking and Naming/Style Lint",
+    "type": "bad",
+    "code": "// tsconfig.json — permissive\n{\n  \"compilerOptions\": {\n    \"strict\": false,\n    \"noImplicitAny\": false\n  }\n}\n\n// package.json — no checks gated\n{\n  \"scripts\": {\n    \"build\": \"tsc\",\n    \"test\": \"vitest\"\n  }\n}",
+    "language": "json",
+    "description": "no gates; the next agent edit silently introduces `any`, cycles, and ad-hoc names"
+  },
+  {
+    "referenceId": "gates-type-check-and-lint",
+    "referenceTitle": "Gate Every Commit With Strict Type-Checking and Naming/Style Lint",
+    "type": "good",
+    "code": "// tsconfig.json — strict + module-cycle detection\n{\n  \"compilerOptions\": {\n    \"strict\": true,\n    \"noImplicitAny\": true,\n    \"noUncheckedIndexedAccess\": true,\n    \"exactOptionalPropertyTypes\": true,\n    \"isolatedModules\": true\n  }\n}\n\n// package.json — pre-commit + CI gates\n{\n  \"scripts\": {\n    \"typecheck\": \"tsc --noEmit\",\n    \"lint\": \"eslint . --max-warnings 0\",\n    \"lint:cycles\": \"madge --circular --extensions ts src/\",\n    \"lint:names\": \"eslint . --rule '@typescript-eslint/naming-convention: error'\",\n    \"verify\": \"pnpm typecheck && pnpm lint && pnpm lint:cycles && pnpm test\"\n  },\n  \"lint-staged\": {\n    \"*.ts\": [\"pnpm typecheck\", \"pnpm lint --fix\", \"pnpm lint:cycles\"]\n  }\n}\n\n// .github/workflows/ci.yml — same checks, failing-mode\n// - run: pnpm verify",
+    "language": "json",
+    "description": "gates enforce the ontology before code lands"
+  },
+  {
+    "referenceId": "graph-acyclic-explicit-surfaces",
+    "referenceTitle": "Forbid Import Cycles and Publish Module Surfaces via Explicit Index Files",
+    "type": "bad",
+    "code": "// src/services/billing/billing.service.ts\nimport { IdentityService } from '../../identity/identity.service';\n// src/services/identity/identity.service.ts\nimport { BillingService } from '../../billing/billing.service';  // <-- cycle\n\n// src/utils/index.ts\nexport * from '../services/billing/billing.repository';  // leaks internals\nexport * from '../services/identity/identity.repository';",
+    "language": "ts",
+    "description": "cycle + deep relative imports + unbounded re-exports"
+  },
+  {
+    "referenceId": "graph-acyclic-explicit-surfaces",
+    "referenceTitle": "Forbid Import Cycles and Publish Module Surfaces via Explicit Index Files",
+    "type": "good",
+    "code": "// src/domain/legal-party/index.ts — typed surface, nothing else exposed\nexport type { LegalParty, LegalPartyId } from './legal-party.types';\nexport { createLegalParty, isLegalParty } from './legal-party';\n\n// src/services/billing/index.ts\nexport type { BillingProfile } from './billing.types';\nexport { BillingService } from './billing.service';\n\n// src/services/billing/billing.service.ts\nimport type { LegalPartyId } from '@/domain/legal-party';\n// note: no import from identity; both depend on domain, not on each other.\n\n// src/services/identity/index.ts\nexport type { AuthenticationProfile } from './identity.types';\nexport { IdentityService } from './identity.service';",
+    "language": "ts",
+    "description": "acyclic deps via shared domain layer; each module exposes only its public surface"
+  },
+  {
+    "referenceId": "graph-folder-as-module",
+    "referenceTitle": "Make Folder Structure Mirror the Module Dependency Graph",
+    "type": "bad",
+    "code": "src/\n  utils.ts\n  helpers.ts\n  customer.ts\n  customerHelpers.ts\n  customerUtils.ts\n  billing.ts\n  billingHelpers.ts\n  index.ts",
+    "language": "typescript",
+    "description": "flat or implementation-detail layout — module graph not legible from folder structure"
+  },
+  {
+    "referenceId": "graph-folder-as-module",
+    "referenceTitle": "Make Folder Structure Mirror the Module Dependency Graph",
+    "type": "good",
+    "code": "src/\n  domain/\n    legal-party/\n      legal-party.types.ts\n      legal-party.ts\n      index.ts        // public surface only\n    billing-event/\n      billing-event.types.ts\n      billing-event.ts\n      index.ts\n  services/\n    billing/\n      billing.service.ts\n      billing.repository.ts\n      index.ts\n    identity/\n      identity.service.ts\n      index.ts\n  app/\n    routes.ts\n    server.ts",
+    "language": "typescript",
+    "description": "folder structure encodes the module graph; each folder is one cohesive concept"
+  },
+  {
+    "referenceId": "identifiers-canonical-consistency",
+    "referenceTitle": "Use One Canonical Name Per Concept Across the Entire Repository",
+    "type": "bad",
+    "code": "// services/billing.ts\nexport interface Customer { id: string; balance: number; }\n\n// services/identity.ts\nexport interface User { id: string; email: string; }\n\n// services/compliance.ts\nexport interface Account { id: string; jurisdiction: string; }\n\n// callers must triangulate that Customer.id === User.id === Account.id",
+    "language": "ts",
+    "description": "the same domain entity surfaces under three competing labels — agent cannot link related files"
+  },
+  {
+    "referenceId": "identifiers-canonical-consistency",
+    "referenceTitle": "Use One Canonical Name Per Concept Across the Entire Repository",
+    "type": "good",
+    "code": "// domain/legal-party.ts — the single canonical identifier\nexport interface LegalParty {\n  legalPartyId: LegalPartyId;\n  displayName: string;\n}\nexport type LegalPartyId = string & { readonly __brand: 'LegalPartyId' };\n\n// services/billing.ts\nimport type { LegalPartyId } from '../domain/legal-party';\nexport interface BillingProfile {\n  legalPartyId: LegalPartyId;\n  balanceMinorUnits: number;\n}\n\n// services/identity.ts\nimport type { LegalPartyId } from '../domain/legal-party';\nexport interface AuthenticationProfile {\n  legalPartyId: LegalPartyId;\n  primaryEmail: string;\n}",
+    "language": "ts",
+    "description": "one canonical term; specializations declare their relation to it"
+  },
+  {
+    "referenceId": "identifiers-descriptive-names",
+    "referenceTitle": "Use Descriptive Identifiers That State Intent, Not Abbreviations or Single Letters",
+    "type": "bad",
+    "code": "function p(d: any[], f: any): any[] {\n  const r = [];\n  for (const x of d) {\n    if (f(x)) r.push(x);\n  }\n  return r;\n}\n\nconst u = await fetch('/u').then(r => r.json());\nconst a = u.filter((x: any) => x.s === 'A');",
+    "language": "ts",
+    "description": "single-letter and unsemantic abbreviations — agent must reconstruct intent from usage"
+  },
+  {
+    "referenceId": "identifiers-descriptive-names",
+    "referenceTitle": "Use Descriptive Identifiers That State Intent, Not Abbreviations or Single Letters",
+    "type": "good",
+    "code": "function filterMatchingItems<TItem>(\n  items: readonly TItem[],\n  predicate: (item: TItem) => boolean\n): TItem[] {\n  return items.filter(predicate);\n}\n\nconst billingCustomers = await fetchBillingCustomers();\nconst activeBillingCustomers = billingCustomers.filter(\n  (customer) => customer.accountStatus === 'active'\n);",
+    "language": "ts",
+    "description": "identifiers state the intent the LLM should consume directly"
+  },
+  {
+    "referenceId": "monorepo-affected-graph-as-agent-context",
+    "referenceTitle": "Expose the Affected/Build Graph as the Agent's Primary Navigation Primitive",
+    "type": "bad",
+    "code": "# agent's tool inventory: just `bash`\n$ grep -r \"LegalPartyId\" .\n# scans 200,000 files; returns 12,000 matches; agent dumps half into context",
+    "language": "bash",
+    "description": "agent reaches for grep across the whole monorepo because no graph tool is exposed"
+  },
+  {
+    "referenceId": "monorepo-affected-graph-as-agent-context",
+    "referenceTitle": "Expose the Affected/Build Graph as the Agent's Primary Navigation Primitive",
+    "type": "good",
+    "code": "// AGENTS.md at the repository root (excerpt)\n// Tools you SHOULD use before reading files:\n//   - `pnpm nx affected:graph --base=origin/main`   — scope of impacted packages\n//   - `pnpm nx graph`                                — full workspace graph\n//   - Bazel: `bazel query \"rdeps(//..., <target>)\"`  — reverse dependencies\n// Tools you should NOT use for navigation:\n//   - `grep -r` across the workspace (use the project graph; it is faster and precise)",
+    "language": "jsonc",
+    "description": "workspace exposes the project graph and affected set as agent tools"
+  },
+  {
+    "referenceId": "monorepo-per-package-tiered-descriptors",
+    "referenceTitle": "Place AGENTS.md at Every Package Root; Nearest-File-Wins as Default",
+    "type": "bad",
+    "code": "repo/\n  AGENTS.md     # 800 lines covering payments, marketing, mobile, infra, all in one\n  packages/\n    payments-service/\n      src/\n      tests/\n    marketing-site/\n      src/\n    mobile-app/\n      src/",
+    "language": "typescript",
+    "description": "single 800-line root AGENTS.md tries to cover everything; per-package conventions vanish"
+  },
+  {
+    "referenceId": "monorepo-per-package-tiered-descriptors",
+    "referenceTitle": "Place AGENTS.md at Every Package Root; Nearest-File-Wins as Default",
+    "type": "good",
+    "code": "<!-- repo/packages/payments-service/AGENTS.md (per-package) -->\n# AGENTS.md — payments-service\n\n## Intent\nOwns billing, ledger writes, and reconciliation.\n\n## Invariants\n- All amounts are bigint minor units (ADR-0014). NEVER introduce floats.\n- The ledger is append-only; updates use compensating entries.\n\n## Public surface\n- Exported from `src/index.ts`. Anything not re-exported is internal.\n\n## Allowed dependencies\n- May depend on: `@workspace/domain-billing`, `@workspace/shared-types`.\n- May NOT depend on: `marketing-site`, `mobile-app`, anything in `apps/`.\n\n## Tests\n- `pnpm nx test payments-service` (unit)\n- `pnpm nx e2e payments-service-e2e` (integration; requires devbox)",
+    "language": "md",
+    "description": "root descriptor + per-package descriptors; nearest-wins resolution"
+  },
+  {
+    "referenceId": "monorepo-tagged-package-boundaries",
+    "referenceTitle": "Enforce Tag-Based Package Boundaries So Workspaces Form a Layered Dependency Graph",
+    "type": "bad",
+    "code": "// nx.json — no targetDefaults for module boundaries\n{\n  \"namedInputs\": { \"default\": [\"{projectRoot}/**/*\"] }\n}\n\n// any project can import any other; the dependency graph is unbounded\n// packages/marketing-site/app/page.tsx\nimport { internalPaymentToken } from '../../../packages/payments-service/src/internal';",
+    "language": "jsonc",
+    "description": "workspace with packages but no boundary rules — every package can import every other"
+  },
+  {
+    "referenceId": "monorepo-tagged-package-boundaries",
+    "referenceTitle": "Enforce Tag-Based Package Boundaries So Workspaces Form a Layered Dependency Graph",
+    "type": "good",
+    "code": "// packages/domain-billing/project.json\n{ \"name\": \"domain-billing\", \"tags\": [\"scope:billing\", \"type:domain\"] }\n\n// packages/feature-billing-summary/project.json\n{ \"name\": \"feature-billing-summary\", \"tags\": [\"scope:billing\", \"type:feature\"] }\n\n// packages/marketing-site/project.json\n{ \"name\": \"marketing-site\", \"tags\": [\"scope:marketing\", \"type:app\"] }\n\n// .eslintrc.json  (or nx.json depConstraints in newer Nx)\n{\n  \"rules\": {\n    \"@nx/enforce-module-boundaries\": [\"error\", {\n      \"depConstraints\": [\n        { \"sourceTag\": \"scope:billing\",   \"onlyDependOnLibsWithTags\": [\"scope:billing\", \"scope:shared\"] },\n        { \"sourceTag\": \"scope:marketing\", \"onlyDependOnLibsWithTags\": [\"scope:marketing\", \"scope:shared\"] },\n        { \"sourceTag\": \"type:app\",     \"onlyDependOnLibsWithTags\": [\"type:feature\", \"type:lib\", \"type:domain\"] },\n        { \"sourceTag\": \"type:feature\", \"onlyDependOnLibsWithTags\": [\"type:lib\", \"type:domain\"] },\n        { \"sourceTag\": \"type:lib\",     \"onlyDependOnLibsWithTags\": [\"type:lib\", \"type:domain\"] },\n        { \"sourceTag\": \"type:domain\",  \"onlyDependOnLibsWithTags\": [\"type:domain\"] }\n      ]\n    }]\n  }\n}",
+    "language": "jsonc",
+    "description": "project.json tags + ESLint rule enforce a layered, scoped graph"
+  },
+  {
+    "referenceId": "sizing-function-and-file-bounds",
+    "referenceTitle": "Keep Functions Small and Files Cohesive; Bound by LLM Cognitive Complexity, Not McCabe",
+    "type": "bad",
+    "code": "export async function handleOrder(input: unknown): Promise<unknown> {\n  // 25 lines of input validation\n  if (typeof input !== 'object' || input === null) throw new Error('bad');\n  // ... (many more checks)\n  // 40 lines of transformation\n  const items = (input as any).items.map((i: any) => { /* ... */ });\n  // 30 lines of pricing\n  let subtotal = 0;\n  for (const item of items) { /* ... */ }\n  // 25 lines of tax calculation\n  // 40 lines of persistence\n  // 40 lines of notification\n  // total: 200 LOC, McCabe ~22, LM-CC even higher\n}",
+    "language": "ts",
+    "description": "one 200-line function entangling validation, transformation, persistence, notification"
+  },
+  {
+    "referenceId": "sizing-function-and-file-bounds",
+    "referenceTitle": "Keep Functions Small and Files Cohesive; Bound by LLM Cognitive Complexity, Not McCabe",
+    "type": "good",
+    "code": "// each function ~6–20 lines; pure where possible\nexport function parseOrderInput(input: unknown): Result<OrderInput, ParseError> {\n  return OrderInputSchema.safeParse(input);\n}\n\nexport function priceOrder(items: readonly OrderItem[]): PricedOrder {\n  const subtotal = items.reduce((sum, item) => sum + item.unitPriceMinorUnits * item.quantity, 0);\n  const tax = Math.round(subtotal * TAX_RATE_BASIS_POINTS / 10_000);\n  return { subtotal, tax, total: subtotal + tax };\n}\n\nexport async function recordOrder(\n  order: PricedOrder,\n  deps: { orders: OrderRepository },\n): Promise<Result<OrderId, RecordError>> {\n  return deps.orders.insert(order);\n}\n\n// thin shell composes the pieces — easily inspected\nexport async function handleOrder(\n  input: unknown,\n  deps: { orders: OrderRepository; mail: MailGateway },\n): Promise<Result<{ orderId: OrderId }, HandleOrderError>> {\n  const parsed = parseOrderInput(input);\n  if (!parsed.ok) return { ok: false, error: { kind: 'parse', detail: parsed.error } };\n  const priced = priceOrder(parsed.value.items);\n  const recorded = await recordOrder(priced, deps);\n  if (!recorded.ok) return { ok: false, error: { kind: 'record', detail: recorded.error } };\n  await deps.mail.send(parsed.value.customerEmail, priced.total);\n  return { ok: true, value: { orderId: recorded.value } };\n}",
+    "language": "ts",
+    "description": "each function does one thing; LOC and complexity bounded; agent can read, mutate, and test each independently"
+  },
+  {
+    "referenceId": "sizing-token-budget-and-context-rot",
+    "referenceTitle": "Treat the LLM's Effective Context as a Hard Budget; Optimize Token Density",
+    "type": "bad",
+    "code": "/**\n * This function takes an array of billing events\n * and returns a summary object.\n *\n * It iterates over the events and adds up the amounts\n * to compute the total.\n *\n * @param events - the events\n * @param events.amountMinorUnits - the amount\n * @returns the summary object\n */\nexport function summarize(\n\n  events:   readonly  BillingEvent[],\n\n): BillingSummary {\n\n  // initialize the total\n  let   total = 0;\n\n  // loop through the events\n  for (   const  event   of    events    ) {\n\n    total  +=  event.amountMinorUnits;\n\n  }\n\n  // return the summary\n  return    {  totalMinorUnits:  total,  entryCount:   events.length   };\n}",
+    "language": "ts",
+    "description": "verbose formatting, redundant docstrings, key facts buried in the middle"
+  },
+  {
+    "referenceId": "sizing-token-budget-and-context-rot",
+    "referenceTitle": "Treat the LLM's Effective Context as a Hard Budget; Optimize Token Density",
+    "type": "good",
+    "code": "/** Sum minor-unit amounts and count entries. Amounts must already be in same currency (ADR-0014). */\nexport function summarize(events: readonly BillingEvent[]): BillingSummary {\n  const totalMinorUnits = events.reduce((sum, event) => sum + event.amountMinorUnits, 0);\n  return { totalMinorUnits, entryCount: events.length };\n}",
+    "language": "ts",
+    "description": "dense formatting; docstring carries information not derivable from the signature; key facts at top"
+  },
+  {
+    "referenceId": "types-narrow-api-surfaces",
+    "referenceTitle": "Design Narrow, Deep Public API Surfaces; Curate Re-Exports Deliberately",
+    "type": "bad",
+    "code": "// src/services/billing/index.ts — agent has no idea what is \"public\"\nexport * from './billing.service';\nexport * from './billing.repository';\nexport * from './billing.cache';\nexport * from './internal/legacy-billing-helpers';\nexport * from './internal/migration-2024-q3';\n\n// callers see hundreds of symbols; many shouldn't exist outside the module",
+    "language": "ts",
+    "description": "everything exported, no curated surface, ambiguous shapes"
+  },
+  {
+    "referenceId": "types-narrow-api-surfaces",
+    "referenceTitle": "Design Narrow, Deep Public API Surfaces; Curate Re-Exports Deliberately",
+    "type": "good",
+    "code": "// src/services/billing/index.ts\n//\n// Public surface of the billing service. Everything not re-exported here is\n// internal to the module and may be renamed or removed without notice.\n\n/** A customer's billing summary at a point in time. */\nexport type { BillingSummary } from './billing.types';\n\n/**\n * BillingService — orchestrates billing reads and writes against the ledger.\n *\n * Use this from API handlers and scheduled jobs. Do NOT instantiate inside\n * domain code; pass it in via constructor injection so it is testable.\n *\n * @example\n * const summary = await billingService.summarize(legalPartyId);\n */\nexport { BillingService } from './billing.service';\n\n/** Thrown when a billing operation cannot resolve a customer to a ledger account. */\nexport { BillingResolutionError } from './billing.errors';",
+    "language": "ts",
+    "description": "curated narrow surface + descriptive doc comments that double as retrieval index"
+  },
+  {
+    "referenceId": "types-schema-validated-outputs",
+    "referenceTitle": "Define and Schema-Validate Every Structured Output Cross-Boundary",
+    "type": "bad",
+    "code": "const response = await llm.complete({\n  prompt: 'Extract billing event as JSON',\n  text: invoiceText,\n});\n\n// trust the model; pray the keys exist\nconst event = JSON.parse(response.content);\nawait ledger.recordEvent(event.amount, event.currency, event.customerId);",
+    "language": "ts",
+    "description": "unvalidated JSON crosses an LLM boundary — runtime errors and silent contract drift"
+  },
+  {
+    "referenceId": "types-schema-validated-outputs",
+    "referenceTitle": "Define and Schema-Validate Every Structured Output Cross-Boundary",
+    "type": "good",
+    "code": "import { z } from 'zod';\n\nexport const BillingEventSchema = z.object({\n  amountMinorUnits: z.number().int().nonnegative(),\n  currency: z.enum(['USD', 'EUR', 'GBP']),\n  legalPartyId: z.string().min(1),\n  occurredAt: z.string().datetime(),\n});\nexport type BillingEvent = z.infer<typeof BillingEventSchema>;\n\nconst rawResponse = await llm.complete({\n  prompt: 'Extract billing event as JSON',\n  text: invoiceText,\n  responseFormat: { type: 'json_schema', schema: BillingEventSchema },\n});\n\nconst parsed = BillingEventSchema.safeParse(JSON.parse(rawResponse.content));\nif (!parsed.success) {\n  throw new BillingEventContractError(parsed.error);\n}\nawait ledger.recordEvent(parsed.data);",
+    "language": "ts",
+    "description": "schema is the contract; validate at every crossing"
+  },
+  {
+    "referenceId": "types-strong-signatures",
+    "referenceTitle": "Annotate Every Public Signature With Specific, Non-any Types",
+    "type": "bad",
+    "code": "export function process(data: any, options: any) {\n  if (options.mode === 'sum') return data.reduce((a, b) => a + b.amount, 0);\n  if (options.mode === 'count') return data.length;\n  return null;\n}",
+    "language": "ts",
+    "description": "signature gives the agent no type-shaped grounding"
+  },
+  {
+    "referenceId": "types-strong-signatures",
+    "referenceTitle": "Annotate Every Public Signature With Specific, Non-any Types",
+    "type": "good",
+    "code": "export type AmountMinorUnits = number & { readonly __brand: 'AmountMinorUnits' };\n\nexport interface LedgerEntry {\n  readonly entryId: string;\n  readonly amountMinorUnits: AmountMinorUnits;\n}\n\nexport type LedgerSummaryRequest =\n  | { readonly mode: 'sum' }\n  | { readonly mode: 'count' };\n\nexport interface LedgerSummary {\n  readonly mode: LedgerSummaryRequest['mode'];\n  readonly value: number;\n}\n\nexport function summarizeLedgerEntries(\n  entries: readonly LedgerEntry[],\n  request: LedgerSummaryRequest\n): LedgerSummary {\n  switch (request.mode) {\n    case 'sum':\n      return {\n        mode: 'sum',\n        value: entries.reduce((total, entry) => total + entry.amountMinorUnits, 0),\n      };\n    case 'count':\n      return { mode: 'count', value: entries.length };\n  }\n}",
+    "language": "ts",
+    "description": "discriminated input, explicit return, branded primitives"
+  }
+]
