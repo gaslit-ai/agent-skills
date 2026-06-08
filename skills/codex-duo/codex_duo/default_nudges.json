@@ -1,0 +1,22 @@
+[
+  {
+    "turnIndex": 0,
+    "nudge": "State the strongest defensible version before qualifying it."
+  },
+  {
+    "turnIndex": 2,
+    "nudge": "Before accepting a caveat, identify exactly what it forces you to give up."
+  },
+  {
+    "turnIndex": "lastA-4",
+    "nudge": "Begin wrapping up, 4 turns remaining."
+  },
+  {
+    "turnIndex": "lastA",
+    "nudge": "Make this concrete enough to resolve. State what holds, what fails, and why."
+  },
+  {
+    "turnIndex": "lastB",
+    "nudge": "It is now the final turn."
+  }
+]
