@@ -9,7 +9,7 @@ tags: tag1, tag2
 
 **Impact: MEDIUM**
 
-Brief (2-4 sentence) explanation of the rule and why it matters, grounded in the evidence. Use highly technical specialized terminology, empirical, and/or technical nomenclature.
+Brief (2-4 sentence) explanation grounded in empirical evidence with specific study findings and numeric results where available. Lead with the rule, then the evidence, then the implication for code authorship under agentic AI consumption.
 
 **Incorrect (what fails):**
 
@@ -23,6 +23,6 @@ Brief (2-4 sentence) explanation of the rule and why it matters, grounded in the
 // improved pattern
 ```
 
-References: 
+References:
 - [Source](https://example.com)
 - [Source](https://example2.com)
