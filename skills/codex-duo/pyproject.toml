@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-duo"
+version = "0.2.0"
+description = "Stress-test an idea with two persistent Codex agents (a proponent vs. a fresh challenger)."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+codex-duo = "codex_duo:main"
+
+[tool.setuptools]
+packages = ["codex_duo"]
+
+[tool.setuptools.package-data]
+codex_duo = ["default_nudges.json", "prompts/*.md"]

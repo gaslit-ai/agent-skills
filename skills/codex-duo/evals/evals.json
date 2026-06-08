@@ -1,0 +1,26 @@
+{
+  "skill_name": "codex-duo",
+  "evals": [
+    {
+      "id": 0,
+      "name": "reflection-default-monolith",
+      "prompt": "I've been telling my team we should kill our microservices and collapse back to a monolith. I'm fairly convinced I'm right, but I want it pressure-tested before the architecture review. Spin up two agents — one defending the idea, one challenging it with fresh eyes — run it about 6 turns, and show me the transcript plus the session ids so I can dig in later.",
+      "expected_output": "Uses codex-duo in default reflection mode: A=proponent articulates+defends the monolith idea and honestly concedes/refines under pressure; B=socratic challenges cold with no priors. ~6 alternating turns. Returns transcript + per-agent thread_ids.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "custom-debate-rlhf",
+      "prompt": "Set up a debate between two codex agents on whether RLHF is sufficient for AI alignment — one arguing strongly yes, one strongly no. Go about 6 exchanges and give me the whole back-and-forth.",
+      "expected_output": "Uses codex-duo with custom --system-a/--system-b personas (pro vs con). ~6 alternating turns of substantive, position-held debate. Returns full transcript + metadata.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "minimal-challenge-db-per-service",
+      "prompt": "challenge this belief for me with codex-duo: 'every microservice should own its own database.' just a few turns, read-only",
+      "expected_output": "Uses codex-duo default reflection mode, short turn count, --sandbox read-only. A defends the claim, B challenges Socratically. Returns transcript + metadata.",
+      "files": []
+    }
+  ]
+}
