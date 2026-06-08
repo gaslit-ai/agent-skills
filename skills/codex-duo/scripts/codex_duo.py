@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """codex-duo — stress-test an idea with two persistent Codex app-server agents.
 
 Keeps one ``codex app-server --stdio`` process open, starts two Codex threads, and
@@ -8,8 +12,8 @@ reveals the relay, the turn schedule, or another agent. Standing roles live in
 thread-level ``developerInstructions`` (proponent for A, Socratic challenger for B
 by default). Sparse hidden ``additionalContext`` nudges shape the arc.
 
-Install:  pip install .        (or: pipx install . / uv tool install .)
-Run:      codex-duo "<concept / idea to stress-test>" [options]
+Run:  python3 scripts/codex_duo.py "<concept / idea to stress-test>" [options]
+      (uv run scripts/codex_duo.py "<concept>" also works — deps are stdlib only)
 
 The run streams a JSONL log — one record per line, flushed as each turn completes —
 so a killed or failed run keeps every turn it finished.
@@ -29,12 +33,12 @@ import sys
 import threading
 import time
 import uuid
-from importlib import resources
+from pathlib import Path
 from typing import Any
 
 CLIENT_NAME = "codex-duo"
 CLIENT_TITLE = "Codex Duo"
-CLIENT_VERSION = "0.2.0"
+CLIENT_VERSION = "0.3.0"
 MIN_TURNS = 15
 SMOKE_MODEL = "gpt-5.4-mini"
 SMOKE_EFFORT = "low"
@@ -43,21 +47,12 @@ SMOKE_TURNS = 4
 CODEX_INSTALL_HINT = "npm install -g @openai/codex"
 CODEX_LOGIN_HINT = "codex login"
 
-
-# --- packaged data, located via importlib.resources (install- and source-safe) ---
-
-def _data(*parts: str):
-    res = resources.files("codex_duo")
-    for p in parts:
-        res = res / p
-    return res
-
-
-def _data_is_file(*parts: str) -> bool:
-    try:
-        return _data(*parts).is_file()
-    except (FileNotFoundError, OSError):
-        return False
+# Bundled data lives in <skill>/assets/, resolved relative to this script so the
+# skill runs in place from anywhere (incl. through a symlinked skills dir).
+SKILL_ROOT = Path(__file__).resolve().parent.parent
+ASSETS = SKILL_ROOT / "assets"
+PROMPTS = ASSETS / "prompts"
+DEFAULT_NUDGES = ASSETS / "default_nudges.json"
 
 
 class CodexAppServerError(RuntimeError):
@@ -320,18 +315,18 @@ class JsonlLog:
 def resolve_persona(val: str | None, concept: str) -> str | None:
     if not val:
         return None
-    if _data_is_file("prompts", f"{val}.md"):           # named library persona
-        text = _data("prompts", f"{val}.md").read_text(encoding="utf-8").strip()
+    named = PROMPTS / f"{val}.md"
+    if named.is_file():                                   # named library persona
+        text = named.read_text(encoding="utf-8").strip()
     elif os.path.isfile(val):                            # filesystem path
-        with open(val, encoding="utf-8") as f:
-            text = f.read().strip()
+        text = Path(val).read_text(encoding="utf-8").strip()
     else:                                                # literal text
         text = val
     return text.replace("{concept}", concept)
 
 
-def packaged_default_nudges() -> list[Any]:
-    return json.loads(_data("default_nudges.json").read_text(encoding="utf-8"))
+def default_nudges() -> list[Any]:
+    return json.loads(DEFAULT_NUDGES.read_text(encoding="utf-8"))
 
 
 def load_nudge_entries(source: str) -> list[Any]:
@@ -475,7 +470,7 @@ def preflight_or_exit() -> None:
     sys.stderr.write("codex-duo: cannot run — missing prerequisites:\n")
     for name, detail in missing:
         sys.stderr.write(f"  {_mark(False)} {name}: {detail}\n")
-    sys.stderr.write("Fix them with:  codex-duo --doctor\n")
+    sys.stderr.write("Re-run with --doctor to check and fix, then retry.\n")
     raise SystemExit(1)
 
 
@@ -510,9 +505,9 @@ def run_doctor() -> int:
         ok, detail = _app_server_handshake()
         print(f"\n  {_mark(ok)} codex app-server handshake: {detail}")
         if ok:
-            print('\nAll good. `codex-duo "<idea>"` is ready.')
+            print("\nAll good — codex-duo is ready.")
             return 0
-    print("\nStill blocked — fix the items above and re-run `codex-duo --doctor`.")
+    print("\nStill blocked — fix the items above and re-run with --doctor.")
     return 1
 
 
@@ -529,7 +524,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--system-b", help="B's developer prompt; default: socratic. Supports {concept}.")
     ap.add_argument("--opening", help="A's first visible user message")
     ap.add_argument("--no-nudges", action="store_true", help="disable hidden sparse nudges")
-    ap.add_argument("--nudges", default=None, help="nudge JSON array, file path, or @file path (default: packaged schedule)")
+    ap.add_argument("--nudges", default=None, help="nudge JSON array, file path, or @file path (default: bundled schedule)")
     ap.add_argument("--effort", choices=["none", "minimal", "low", "medium", "high", "xhigh", "max"],
                     help="app-server ReasoningEffort override; max is treated as xhigh")
     ap.add_argument("--model", help="model override for both agent threads")
@@ -577,7 +572,7 @@ def main() -> int:
     )
     output_path = args.out or default_output_path(os.getcwd())
 
-    # The packaged default schedule targets full-length runs (lastA-4, etc.); a
+    # The bundled default schedule targets full-length runs (lastA-4, etc.); a
     # short --smoke loop has nowhere to put them, so smoke runs nudge-free unless
     # the caller passes --nudges explicitly.
     nudges_off = args.no_nudges or (args.smoke and args.nudges is None)
@@ -587,7 +582,7 @@ def main() -> int:
         elif args.nudges:
             nudge_entries = load_nudge_entries(args.nudges)
         else:
-            nudge_entries = packaged_default_nudges()
+            nudge_entries = default_nudges()
         nudge_schedule = build_nudge_schedule(nudge_entries, turns)
     except ValueError as exc:
         ap.error(str(exc))
@@ -601,7 +596,7 @@ def main() -> int:
         "sandbox": args.sandbox or "(config default)",
         "approval": args.approval or "(config default)",
         "nudges": bool(nudge_entries),
-        "nudge_source": None if nudges_off else (args.nudges or "packaged"),
+        "nudge_source": None if nudges_off else (args.nudges or "bundled"),
         "nudge_schedule": [
             {"turn": idx + 1, "turn_index": idx, "nudge": v} for idx, v in sorted(nudge_schedule.items())
         ],
